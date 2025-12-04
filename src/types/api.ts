@@ -237,7 +237,7 @@ export interface UpdateApplicationAdminRequest {
     email?: string;
     phone?: string;
     position_applied_for?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 // Owner update (cannot change status)
@@ -249,7 +249,7 @@ export interface UpdateApplicationOwnerRequest {
     last_name?: string;
     other_name?: string;
     // ... other fields except status
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 // Query parameters
@@ -311,7 +311,7 @@ export interface FunatoSmsStatusResponse {
     delivered_at?: string;
 }
 
-export interface FunatoSmsHistoryResponse extends PaginatedResponse<FunatoSmsResponse> { }
+export type FunatoSmsHistoryResponse = PaginatedResponse<FunatoSmsResponse>;
 
 // Email Types
 export interface FunatoSendEmailRequest {
@@ -388,7 +388,7 @@ export interface FunatoContact {
     phone_number: string;
     email?: string;
     group?: string;
-    custom_fields?: Record<string, any>;
+    custom_fields?: Record<string, unknown>;
     created_at: string;
     updated_at: string;
 }
@@ -398,17 +398,17 @@ export interface FunatoCreateContactRequest {
     phone_number: string;
     email?: string;
     group?: string;
-    custom_fields?: Record<string, any>;
+    custom_fields?: Record<string, unknown>;
 }
 
 export interface FunatoUpdateContactRequest {
     name?: string;
     email?: string;
     group?: string;
-    custom_fields?: Record<string, any>;
+    custom_fields?: Record<string, unknown>;
 }
 
-export interface FunatoContactListResponse extends PaginatedResponse<FunatoContact> { }
+export type FunatoContactListResponse = PaginatedResponse<FunatoContact>;
 
 // Campaign Types
 export interface FunatoCampaign {
@@ -486,7 +486,7 @@ export interface FunatoEmailWebhook {
     email: string;
     event: 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'unsubscribed';
     timestamp: string;
-    data?: Record<string, any>;
+    data?: Record<string, unknown>;
 }
 
 // Query parameters
@@ -597,6 +597,18 @@ export interface Admission {
     decision_made_at: string;
     created_at: string;
     updated_at: string;
+    // Form fields
+    applicant_name: string;
+    applicant_email: string;
+    applicant_phone: string;
+    programme: string;
+    admission_status: 'pending' | 'admitted' | 'rejected' | 'waitlisted';
+    screening_score?: number | null;
+    interview_date?: string | null;
+    remarks?: string | null;
+    faculty_id?: number | null;
+    department_id?: number | null;
+    mode_of_entry_id?: number | null;
     admission_application: {
         id: number;
         student_id: string;

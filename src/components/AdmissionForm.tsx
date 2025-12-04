@@ -29,12 +29,12 @@ export default function AdmissionForm({ admission, onSubmit, isLoading = false }
                 applicant_phone: admission.applicant_phone,
                 programme: admission.programme,
                 admission_status: admission.admission_status,
-                screening_score: admission.screening_score || undefined,
+                screening_score: admission.screening_score ?? undefined,
                 interview_date: admission.interview_date?.split('T')[0],
                 remarks: admission.remarks || '',
-                faculty_id: admission.faculty_id,
-                department_id: admission.department_id,
-                mode_of_entry_id: admission.mode_of_entry_id,
+                faculty_id: admission.faculty_id ?? undefined,
+                department_id: admission.department_id ?? undefined,
+                mode_of_entry_id: admission.mode_of_entry_id ?? undefined,
             }
             : {
                 applicant_name: '',

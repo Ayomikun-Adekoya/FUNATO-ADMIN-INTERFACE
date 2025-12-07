@@ -1015,3 +1015,65 @@ export interface SundryPaymentItemQueryParams {
     per_page?: number;
     page?: number;
 }
+
+// Course Types
+export interface Course {
+    id: number;
+    code: string;
+    title: string;
+    unit: number;
+    status: 'active' | 'inactive';
+    level: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800';
+    semester: 'first' | 'second';
+    description?: string | null;
+    is_elective: boolean;
+    program_id: number;
+    department_id: number;
+    faculty_id: number;
+    created_at: string;
+    updated_at: string;
+    program?: Program;
+    department?: Department;
+    faculty?: Faculty;
+}
+
+export interface CreateCourseRequest {
+    code: string;
+    title: string;
+    unit: number;
+    status: 'active' | 'inactive';
+    level: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800';
+    semester: 'first' | 'second';
+    description?: string;
+    is_elective: boolean;
+    program_id: number;
+    department_id: number;
+    faculty_id: number;
+}
+
+export interface UpdateCourseRequest {
+    code?: string;
+    title?: string;
+    unit?: number;
+    status?: 'active' | 'inactive';
+    level?: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800';
+    semester?: 'first' | 'second';
+    description?: string;
+    is_elective?: boolean;
+    program_id?: number;
+    department_id?: number;
+    faculty_id?: number;
+}
+
+export interface CourseQueryParams {
+    program_id?: number;
+    department_id?: number;
+    faculty_id?: number;
+    status?: 'active' | 'inactive';
+    level?: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800';
+    semester?: 'first' | 'second';
+    is_elective?: boolean;
+    search?: string;
+    per_page?: number;
+    page?: number;
+}

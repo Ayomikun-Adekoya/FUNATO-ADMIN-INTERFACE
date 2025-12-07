@@ -18,6 +18,7 @@ import {
     registrationsApi,
     registrationFeeItemsApi,
     sundryPaymentItemsApi,
+    coursesApi,
 } from './api';
 import type {
     User,
@@ -97,6 +98,10 @@ import type {
     CreateSundryPaymentItemRequest,
     UpdateSundryPaymentItemRequest,
     SundryPaymentItemQueryParams,
+    Course,
+    CreateCourseRequest,
+    UpdateCourseRequest,
+    CourseQueryParams,
 } from '@/types/api';
 
 // ============================================
@@ -1146,6 +1151,71 @@ export const useDeleteSundryPaymentItem = (): UseMutationResult<void, Error, num
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sundry-payment-items'] });
             toast.success('Sundry payment item deleted successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+// ============================================
+// COURSES
+// ============================================
+
+export const useCourses = (params?: CourseQueryParams): UseQueryResult<PaginatedResponse<Course>, Error> => {
+    return useQuery({
+        queryKey: ['courses', params],
+        queryFn: () => coursesApi.getAll(params),
+    });
+};
+
+export const useCourse = (id: number): UseQueryResult<Course, Error> => {
+    return useQuery({
+        queryKey: ['courses', id],
+        queryFn: () => coursesApi.getById(id),
+        enabled: !!id,
+    });
+};
+
+export const useCreateCourse = (): UseMutationResult<Course, Error, CreateCourseRequest> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (courseData: CreateCourseRequest) => coursesApi.create(courseData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['courses'] });
+            toast.success('Course created successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useUpdateCourse = (): UseMutationResult<Course, Error, { id: number; data: UpdateCourseRequest }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: UpdateCourseRequest }) => coursesApi.update(id, data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['courses'] });
+            queryClient.invalidateQueries({ queryKey: ['courses', variables.id] });
+            toast.success('Course updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useDeleteCourse = (): UseMutationResult<void, Error, number> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: number) => coursesApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['courses'] });
+            toast.success('Course deleted successfully');
         },
         onError: (error) => {
             toast.error(getErrorMessage(error));

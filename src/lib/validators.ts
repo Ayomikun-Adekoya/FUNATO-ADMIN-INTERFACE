@@ -358,3 +358,36 @@ export const updateSundryPaymentItemSchema = z.object({
 });
 
 export type UpdateSundryPaymentItemFormData = z.infer<typeof updateSundryPaymentItemSchema>;
+
+// Course schemas
+export const createCourseSchema = z.object({
+    code: z.string().min(1, 'Course code is required').toUpperCase(),
+    title: z.string().min(2, 'Course title must be at least 2 characters'),
+    unit: z.number().min(1, 'Unit must be at least 1').max(10, 'Unit cannot exceed 10'),
+    status: z.enum(['active', 'inactive'], { message: 'Status is required' }),
+    level: z.enum(['100', '200', '300', '400', '500', '600', '700', '800'], { message: 'Level is required' }),
+    semester: z.enum(['first', 'second'], { message: 'Semester is required' }),
+    description: z.string().optional(),
+    is_elective: z.boolean(),
+    program_id: z.number().min(1, 'Program is required'),
+    department_id: z.number().min(1, 'Department is required'),
+    faculty_id: z.number().min(1, 'Faculty is required'),
+});
+
+export type CreateCourseFormData = z.infer<typeof createCourseSchema>;
+
+export const updateCourseSchema = z.object({
+    code: z.string().min(1, 'Course code is required').toUpperCase().optional(),
+    title: z.string().min(2, 'Course title must be at least 2 characters').optional(),
+    unit: z.number().min(1, 'Unit must be at least 1').max(10, 'Unit cannot exceed 10').optional(),
+    status: z.enum(['active', 'inactive']).optional(),
+    level: z.enum(['100', '200', '300', '400', '500', '600', '700', '800']).optional(),
+    semester: z.enum(['first', 'second']).optional(),
+    description: z.string().optional(),
+    is_elective: z.boolean().optional(),
+    program_id: z.number().min(1, 'Program is required').optional(),
+    department_id: z.number().min(1, 'Department is required').optional(),
+    faculty_id: z.number().min(1, 'Faculty is required').optional(),
+});
+
+export type UpdateCourseFormData = z.infer<typeof updateCourseSchema>;

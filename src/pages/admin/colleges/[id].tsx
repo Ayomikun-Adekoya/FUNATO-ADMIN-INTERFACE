@@ -18,17 +18,23 @@ export default function EditFacultyPage() {
     const handleSubmit = async (data: UpdateFacultyFormData) => {
         try {
             const payload: Record<string, unknown> = {};
-            if (data.name) payload.name = data.name;
-            if (data.code) payload.code = data.code;
-            if (data.description) payload.description = data.description;
-            if (data.is_active !== undefined) payload.is_active = data.is_active;
+
+            // Only include fields that have actually changed
+            if (data.name && data.name !== faculty?.name) payload.name = data.name;
+            if (data.code && data.code !== faculty?.code) payload.code = data.code;
+            if (data.description !== undefined && data.description !== faculty?.description) {
+                payload.description = data.description;
+            }
+            if (data.is_active !== undefined && data.is_active !== faculty?.is_active) {
+                payload.is_active = data.is_active;
+            }
 
             await updateFacultyMutation.mutateAsync({
                 id: facultyId,
                 data: payload,
             });
             toast.success('College updated successfully!');
-            router.push('/admin/faculties');
+            router.push('/admin/colleges');
         } catch (error) {
             console.error('Update college error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to update college';
@@ -55,8 +61,8 @@ export default function EditFacultyPage() {
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center">
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">College Not Found</h1>
-                            <Link href="/admin/faculties" className="link mt-4 inline-block">
-                                Back to Faculties
+                            <Link href="/admin/colleges" className="link mt-4 inline-block">
+                                Back to Colleges
                             </Link>
                         </div>
                     </div>
@@ -72,10 +78,10 @@ export default function EditFacultyPage() {
                     <div className="mb-8">
                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-4">
                             <Link
-                                href="/admin/faculties"
+                                href="/admin/colleges"
                                 className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                             >
-                                Faculties
+                                Colleges
                             </Link>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

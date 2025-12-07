@@ -68,7 +68,7 @@ export default function FacultiesListPage() {
             render: (faculty: Faculty) => (
                 <div className="flex items-center gap-2">
                     <Link
-                        href={`/admin/faculties/${faculty.id}`}
+                        href={`/admin/colleges/${faculty.id}`}
                         className="link text-sm"
                     >
                         Edit
@@ -90,16 +90,16 @@ export default function FacultiesListPage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-8 flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Faculties</h1>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Colleges</h1>
                             <p className="mt-2 text-gray-600 dark:text-gray-400">
-                                Manage faculties in the system
+                                Manage colleges in the system
                             </p>
                         </div>
                         <Link
-                            href="/admin/faculties/create"
+                            href="/admin/colleges/create"
                             className="btn-primary"
                         >
-                            Create Faculty
+                            Create College
                         </Link>
                     </div>
 
@@ -108,7 +108,7 @@ export default function FacultiesListPage() {
                             <div className="relative w-full sm:w-96">
                                 <input
                                     type="text"
-                                    placeholder="Search faculties..."
+                                    placeholder="Search colleges..."
                                     value={search}
                                     onChange={(e) => {
                                         setSearch(e.target.value);

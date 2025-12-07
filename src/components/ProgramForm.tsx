@@ -144,23 +144,31 @@ export default function ProgramForm({ program, onSubmit, isLoading = false }: Pr
                 {errors.description && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>}
             </div>
 
-            {/* Is Active Toggle */}
+            {/* Active Status Toggle - Only show when editing */}
             {isEditing && (
-                <div className="flex items-center">
-                    <input
-                        {...register('is_active')}
-                        type="checkbox"
-                        id="is_active"
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        checked={isActive}
-                        onChange={(e) => {
-                            setIsActive(e.target.checked);
-                            setValue('is_active', e.target.checked);
-                        }}
-                    />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Active Program
+                <div>
+                    <label className="flex items-center justify-between">
+                        <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Active Status
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setValue('is_active', !isActive);
+                                setIsActive(!isActive);
+                            }}
+                            className={`${isActive ? 'bg-primary-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
+                            role="switch"
+                            aria-checked={isActive}
+                        >
+                            <span
+                                className={`${isActive ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                            />
+                        </button>
                     </label>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {isActive ? 'Program is active' : 'Program is inactive'}
+                    </p>
                 </div>
             )}
 

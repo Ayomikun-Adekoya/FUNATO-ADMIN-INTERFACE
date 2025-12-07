@@ -19,7 +19,7 @@ export default function CreateFacultyPage() {
                 description: data.description,
             });
             toast.success('College created successfully!');
-            router.push('/admin/faculties');
+            router.push('/admin/colleges');
         } catch (error) {
             console.error('Create college error:', error);
             const errorMessage = error instanceof Error ? error.message : 'Failed to create college';
@@ -34,10 +34,10 @@ export default function CreateFacultyPage() {
                     <div className="mb-8">
                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-4">
                             <Link
-                                href="/admin/faculties"
+                                href="/admin/colleges"
                                 className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                             >
-                                Faculties
+                                Colleges
                             </Link>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

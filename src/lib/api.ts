@@ -81,6 +81,10 @@ import type {
     CreateSundryPaymentItemRequest,
     UpdateSundryPaymentItemRequest,
     SundryPaymentItemQueryParams,
+    Course,
+    CreateCourseRequest,
+    UpdateCourseRequest,
+    CourseQueryParams,
 } from '@/types/api';
 import { toast } from 'react-toastify';
 
@@ -464,7 +468,9 @@ export const facultiesApi = {
     },
 
     update: async (id: number, facultyData: UpdateFacultyRequest): Promise<Faculty> => {
+        console.log('Faculties API - Updating faculty:', id, 'with data:', facultyData);
         const { data } = await api.put<ApiResponse<Faculty>>(`/admin/faculties/${id}`, facultyData);
+        console.log('Faculties API - Update response:', data);
         return data.data;
     },
 
@@ -938,6 +944,35 @@ export const sundryPaymentItemsApi = {
 
     delete: async (id: number): Promise<void> => {
         await api.delete(`/admin/sundry-payment-items/${id}`);
+    },
+};
+
+// ============================================
+// COURSES API
+// ============================================
+export const coursesApi = {
+    getAll: async (params?: CourseQueryParams): Promise<PaginatedResponse<Course>> => {
+        const { data: response } = await api.get<ApiResponse<PaginatedResponse<Course>>>('/admin/courses', { params });
+        return response.data;
+    },
+
+    getById: async (id: number): Promise<Course> => {
+        const { data: response } = await api.get<ApiResponse<Course>>(`/admin/courses/${id}`);
+        return response.data;
+    },
+
+    create: async (courseData: CreateCourseRequest): Promise<Course> => {
+        const { data: response } = await api.post<ApiResponse<Course>>('/admin/courses', courseData);
+        return response.data;
+    },
+
+    update: async (id: number, courseData: UpdateCourseRequest): Promise<Course> => {
+        const { data: response } = await api.put<ApiResponse<Course>>(`/admin/courses/${id}`, courseData);
+        return response.data;
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await api.delete(`/admin/courses/${id}`);
     },
 };
 

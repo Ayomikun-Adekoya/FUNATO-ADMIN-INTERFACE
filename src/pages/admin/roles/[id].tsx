@@ -16,12 +16,17 @@ export default function EditRolePage() {
     const updateRoleMutation = useUpdateRole();
 
     const handleSubmit = async (data: UpdateRoleFormData) => {
+        console.log('EditRolePage: handleSubmit called with data:', data);
+        console.log('EditRolePage: roleId:', roleId);
         try {
-            await updateRoleMutation.mutateAsync({ id: roleId, data });
+            console.log('EditRolePage: Calling updateRoleMutation.mutateAsync');
+            const result = await updateRoleMutation.mutateAsync({ id: roleId, data });
+            console.log('EditRolePage: Update successful, result:', result);
             toast.success('Role updated successfully!');
             router.push('/admin/roles');
         } catch (error: any) {
             console.error('Update role error:', error);
+            console.error('Error response:', error.response);
             toast.error(error.response?.data?.message || 'Failed to update role. Please try again.');
         }
     };

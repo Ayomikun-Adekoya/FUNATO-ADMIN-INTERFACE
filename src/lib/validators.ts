@@ -308,3 +308,53 @@ export const updateProgramSchema = z.object({
 });
 
 export type UpdateProgramFormData = z.infer<typeof updateProgramSchema>;
+
+// Registration Fee Item schemas
+export const createRegistrationFeeItemSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    description: z.string().optional(),
+    amount: z.number().min(0, 'Amount must be positive'),
+    category: z.string().min(1, 'Category is required'),
+    is_required: z.boolean(),
+    is_active: z.boolean(),
+    display_order: z.number().min(1, 'Display order must be at least 1'),
+});
+
+export type CreateRegistrationFeeItemFormData = z.infer<typeof createRegistrationFeeItemSchema>;
+
+export const updateRegistrationFeeItemSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+    description: z.string().optional(),
+    amount: z.number().min(0, 'Amount must be positive').optional(),
+    category: z.string().min(1, 'Category is required').optional(),
+    is_required: z.boolean().optional(),
+    is_active: z.boolean().optional(),
+    display_order: z.number().min(1, 'Display order must be at least 1').optional(),
+});
+
+export type UpdateRegistrationFeeItemFormData = z.infer<typeof updateRegistrationFeeItemSchema>;
+
+// Sundry Payment Item schemas
+export const createSundryPaymentItemSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    description: z.string().optional(),
+    amount: z.number().min(0, 'Amount must be positive'),
+    category: z.string().min(1, 'Category is required'),
+    is_active: z.boolean(),
+    display_order: z.number().min(1, 'Display order must be at least 1'),
+    due_date: z.string().optional(),
+});
+
+export type CreateSundryPaymentItemFormData = z.infer<typeof createSundryPaymentItemSchema>;
+
+export const updateSundryPaymentItemSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+    description: z.string().optional(),
+    amount: z.number().min(0, 'Amount must be positive').optional(),
+    category: z.string().min(1, 'Category is required').optional(),
+    is_active: z.boolean().optional(),
+    display_order: z.number().min(1, 'Display order must be at least 1').optional(),
+    due_date: z.string().optional(),
+});
+
+export type UpdateSundryPaymentItemFormData = z.infer<typeof updateSundryPaymentItemSchema>;

@@ -858,3 +858,159 @@ export interface ProgramQueryParams {
     per_page?: number;
     page?: number;
 }
+
+// Student Types
+export interface Student {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    jamb_registration: string;
+    matriculation_number?: string | null;
+    is_active: boolean;
+    registration_completed: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+// Registration Document Types
+export interface RegistrationDocument {
+    id: number;
+    registration_id: number;
+    document_type: 'birth_certificate' | 'local_government_id' | 'passport_photograph';
+    file_path: string;
+    file_name: string;
+    mime_type: string;
+    file_size: number;
+    created_at: string;
+    updated_at: string;
+}
+
+// Registration Types
+export interface Registration {
+    id: number;
+    admission_application_id: number;
+    student_id: number;
+    matriculation_number?: string | null;
+    program_id: number;
+    level: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800';
+    course_confirmed: boolean;
+    enrollment_form_completed: boolean;
+    acceptance_fee_paid: boolean;
+    registration_fee_paid: boolean;
+    credentials_uploaded: boolean;
+    clearance_status: 'pending' | 'approved' | 'rejected';
+    clearance_notes?: string | null;
+    cleared_by?: number | null;
+    cleared_at?: string | null;
+    matriculated: boolean;
+    matriculated_at?: string | null;
+    status: 'pending' | 'cleared' | 'rejected' | 'matriculated';
+    created_at: string;
+    updated_at: string;
+    admission_application?: AdmissionApplication;
+    student?: Student;
+    program?: Program;
+    clearedBy?: User;
+    documents?: RegistrationDocument[];
+}
+
+export interface RegistrationQueryParams {
+    status?: 'pending' | 'cleared' | 'rejected' | 'matriculated';
+    clearance_status?: 'pending' | 'approved' | 'rejected';
+    matriculated?: boolean;
+    search?: string;
+    per_page?: number;
+    page?: number;
+}
+
+export interface ClearRegistrationRequest {
+    clearance_status: 'approved' | 'rejected';
+    clearance_notes?: string;
+}
+
+// Registration Fee Item Types
+export interface RegistrationFeeItem {
+    id: number;
+    name: string;
+    description?: string | null;
+    amount: number;
+    category: string;
+    is_required: boolean;
+    is_active: boolean;
+    display_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateRegistrationFeeItemRequest {
+    name: string;
+    description?: string;
+    amount: number;
+    category: string;
+    is_required: boolean;
+    is_active: boolean;
+    display_order: number;
+}
+
+export interface UpdateRegistrationFeeItemRequest {
+    name?: string;
+    description?: string;
+    amount?: number;
+    category?: string;
+    is_required?: boolean;
+    is_active?: boolean;
+    display_order?: number;
+}
+
+export interface RegistrationFeeItemQueryParams {
+    is_active?: boolean;
+    is_required?: boolean;
+    category?: string;
+    search?: string;
+    per_page?: number;
+    page?: number;
+}
+
+// Sundry Payment Item Types
+export interface SundryPaymentItem {
+    id: number;
+    name: string;
+    description?: string | null;
+    amount: number;
+    category: string;
+    is_active: boolean;
+    display_order: number;
+    due_date?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateSundryPaymentItemRequest {
+    name: string;
+    description?: string;
+    amount: number;
+    category: string;
+    is_active: boolean;
+    display_order: number;
+    due_date?: string;
+}
+
+export interface UpdateSundryPaymentItemRequest {
+    name?: string;
+    description?: string;
+    amount?: number;
+    category?: string;
+    is_active?: boolean;
+    display_order?: number;
+    due_date?: string;
+}
+
+export interface SundryPaymentItemQueryParams {
+    is_active?: boolean;
+    category?: string;
+    search?: string;
+    per_page?: number;
+    page?: number;
+}

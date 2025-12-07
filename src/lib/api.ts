@@ -70,6 +70,17 @@ import type {
     CreateProgramRequest,
     UpdateProgramRequest,
     ProgramQueryParams,
+    Registration,
+    RegistrationQueryParams,
+    ClearRegistrationRequest,
+    RegistrationFeeItem,
+    CreateRegistrationFeeItemRequest,
+    UpdateRegistrationFeeItemRequest,
+    RegistrationFeeItemQueryParams,
+    SundryPaymentItem,
+    CreateSundryPaymentItemRequest,
+    UpdateSundryPaymentItemRequest,
+    SundryPaymentItemQueryParams,
 } from '@/types/api';
 import { toast } from 'react-toastify';
 
@@ -326,7 +337,10 @@ export const rolesApi = {
     },
 
     update: async (id: number, roleData: UpdateRoleRequest): Promise<Role> => {
+        console.log('API: Updating role with id:', id);
+        console.log('API: Role data:', roleData);
         const { data } = await api.put<ApiResponse<Role>>(`/admin/roles/${id}`, roleData);
+        console.log('API: Role updated response:', data);
         return data.data;
     },
 
@@ -846,6 +860,84 @@ export const programsApi = {
 
     delete: async (id: number): Promise<void> => {
         await api.delete(`/admin/programs/${id}`);
+    },
+};
+
+// ============================================
+// REGISTRATIONS API
+// ============================================
+export const registrationsApi = {
+    getAll: async (params?: RegistrationQueryParams): Promise<PaginatedResponse<Registration>> => {
+        const { data: response } = await api.get<ApiResponse<PaginatedResponse<Registration>>>('/admin/admission/registrations', { params });
+        return response.data;
+    },
+
+    getById: async (id: number): Promise<Registration> => {
+        const { data: response } = await api.get<ApiResponse<Registration>>(`/admin/admission/registrations/${id}`);
+        return response.data;
+    },
+
+    clearRegistration: async (id: number, clearanceData: ClearRegistrationRequest): Promise<Registration> => {
+        const { data: response } = await api.post<ApiResponse<Registration>>(`/admin/admission/registrations/${id}/clear`, clearanceData);
+        return response.data;
+    },
+};
+
+// ============================================
+// REGISTRATION FEE ITEMS API
+// ============================================
+export const registrationFeeItemsApi = {
+    getAll: async (params?: RegistrationFeeItemQueryParams): Promise<PaginatedResponse<RegistrationFeeItem>> => {
+        const { data: response } = await api.get<ApiResponse<PaginatedResponse<RegistrationFeeItem>>>('/admin/registration-fee-items', { params });
+        return response.data;
+    },
+
+    getById: async (id: number): Promise<RegistrationFeeItem> => {
+        const { data: response } = await api.get<ApiResponse<RegistrationFeeItem>>(`/admin/registration-fee-items/${id}`);
+        return response.data;
+    },
+
+    create: async (itemData: CreateRegistrationFeeItemRequest): Promise<RegistrationFeeItem> => {
+        const { data: response } = await api.post<ApiResponse<RegistrationFeeItem>>('/admin/registration-fee-items', itemData);
+        return response.data;
+    },
+
+    update: async (id: number, itemData: UpdateRegistrationFeeItemRequest): Promise<RegistrationFeeItem> => {
+        const { data: response } = await api.put<ApiResponse<RegistrationFeeItem>>(`/admin/registration-fee-items/${id}`, itemData);
+        return response.data;
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await api.delete(`/admin/registration-fee-items/${id}`);
+    },
+};
+
+// ============================================
+// SUNDRY PAYMENT ITEMS API
+// ============================================
+export const sundryPaymentItemsApi = {
+    getAll: async (params?: SundryPaymentItemQueryParams): Promise<PaginatedResponse<SundryPaymentItem>> => {
+        const { data: response } = await api.get<ApiResponse<PaginatedResponse<SundryPaymentItem>>>('/admin/sundry-payment-items', { params });
+        return response.data;
+    },
+
+    getById: async (id: number): Promise<SundryPaymentItem> => {
+        const { data: response } = await api.get<ApiResponse<SundryPaymentItem>>(`/admin/sundry-payment-items/${id}`);
+        return response.data;
+    },
+
+    create: async (itemData: CreateSundryPaymentItemRequest): Promise<SundryPaymentItem> => {
+        const { data: response } = await api.post<ApiResponse<SundryPaymentItem>>('/admin/sundry-payment-items', itemData);
+        return response.data;
+    },
+
+    update: async (id: number, itemData: UpdateSundryPaymentItemRequest): Promise<SundryPaymentItem> => {
+        const { data: response } = await api.put<ApiResponse<SundryPaymentItem>>(`/admin/sundry-payment-items/${id}`, itemData);
+        return response.data;
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await api.delete(`/admin/sundry-payment-items/${id}`);
     },
 };
 

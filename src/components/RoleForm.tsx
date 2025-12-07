@@ -37,8 +37,19 @@ export default function RoleForm({ role, onSubmit, isLoading = false }: RoleForm
 
     const selectedPermissionIds = watch('permissions') || [];
 
+    const handlePermissionChange = (permissionId: number, checked: boolean) => {
+        const current = selectedPermissionIds;
+        if (checked) {
+            setValue('permissions', [...current, permissionId]);
+        } else {
+            setValue('permissions', current.filter((id) => id !== permissionId));
+        }
+    };
+
     const handleFormSubmit = (data: CreateRoleFormData | UpdateRoleFormData) => {
         console.log('RoleForm: Submitting data:', data);
+        console.log('RoleForm: Is editing?', isEditing);
+        console.log('RoleForm: Selected permissions:', selectedPermissionIds);
         onSubmit(data);
     };
 
@@ -103,9 +114,8 @@ export default function RoleForm({ role, onSubmit, isLoading = false }: RoleForm
                                     <input
                                         type="checkbox"
                                         id={`permission-${permission.id}`}
-                                        value={permission.id}
-                                        {...register('permissions')}
-                                        defaultChecked={selectedPermissionIds.includes(permission.id)}
+                                        checked={selectedPermissionIds.includes(permission.id)}
+                                        onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
                                         className="mt-0.5 h-4 w-4 text-primary-600 dark:text-primary-500 focus:ring-2 focus:ring-primary-500 
                                                  border-gray-300 dark:border-gray-600 rounded transition-colors"
                                     />

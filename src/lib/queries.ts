@@ -15,6 +15,9 @@ import {
     departmentsApi,
     modeOfEntriesApi,
     programsApi,
+    registrationsApi,
+    registrationFeeItemsApi,
+    sundryPaymentItemsApi,
 } from './api';
 import type {
     User,
@@ -83,6 +86,17 @@ import type {
     CreateProgramRequest,
     UpdateProgramRequest,
     ProgramQueryParams,
+    Registration,
+    RegistrationQueryParams,
+    ClearRegistrationRequest,
+    RegistrationFeeItem,
+    CreateRegistrationFeeItemRequest,
+    UpdateRegistrationFeeItemRequest,
+    RegistrationFeeItemQueryParams,
+    SundryPaymentItem,
+    CreateSundryPaymentItemRequest,
+    UpdateSundryPaymentItemRequest,
+    SundryPaymentItemQueryParams,
 } from '@/types/api';
 
 // ============================================
@@ -970,6 +984,171 @@ export const useDeleteProgram = (): UseMutationResult<void, Error, number> => {
         mutationFn: (id: number) => programsApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['programs'] });
+        },
+    });
+};
+
+// ============================================
+// REGISTRATIONS
+// ============================================
+
+export const useRegistrations = (params?: RegistrationQueryParams): UseQueryResult<PaginatedResponse<Registration>, Error> => {
+    return useQuery({
+        queryKey: ['registrations', params],
+        queryFn: () => registrationsApi.getAll(params),
+    });
+};
+
+export const useRegistration = (id: number): UseQueryResult<Registration, Error> => {
+    return useQuery({
+        queryKey: ['registrations', id],
+        queryFn: () => registrationsApi.getById(id),
+        enabled: !!id,
+    });
+};
+
+export const useClearRegistration = (): UseMutationResult<Registration, Error, { id: number; data: ClearRegistrationRequest }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: ClearRegistrationRequest }) => registrationsApi.clearRegistration(id, data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            queryClient.invalidateQueries({ queryKey: ['registrations', variables.id] });
+            toast.success('Registration clearance updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+// ============================================
+// REGISTRATION FEE ITEMS
+// ============================================
+
+export const useRegistrationFeeItems = (params?: RegistrationFeeItemQueryParams): UseQueryResult<PaginatedResponse<RegistrationFeeItem>, Error> => {
+    return useQuery({
+        queryKey: ['registration-fee-items', params],
+        queryFn: () => registrationFeeItemsApi.getAll(params),
+    });
+};
+
+export const useRegistrationFeeItem = (id: number): UseQueryResult<RegistrationFeeItem, Error> => {
+    return useQuery({
+        queryKey: ['registration-fee-items', id],
+        queryFn: () => registrationFeeItemsApi.getById(id),
+        enabled: !!id,
+    });
+};
+
+export const useCreateRegistrationFeeItem = (): UseMutationResult<RegistrationFeeItem, Error, CreateRegistrationFeeItemRequest> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (itemData: CreateRegistrationFeeItemRequest) => registrationFeeItemsApi.create(itemData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registration-fee-items'] });
+            toast.success('Registration fee item created successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useUpdateRegistrationFeeItem = (): UseMutationResult<RegistrationFeeItem, Error, { id: number; data: UpdateRegistrationFeeItemRequest }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: UpdateRegistrationFeeItemRequest }) => registrationFeeItemsApi.update(id, data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['registration-fee-items'] });
+            queryClient.invalidateQueries({ queryKey: ['registration-fee-items', variables.id] });
+            toast.success('Registration fee item updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useDeleteRegistrationFeeItem = (): UseMutationResult<void, Error, number> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: number) => registrationFeeItemsApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registration-fee-items'] });
+            toast.success('Registration fee item deleted successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+// ============================================
+// SUNDRY PAYMENT ITEMS
+// ============================================
+
+export const useSundryPaymentItems = (params?: SundryPaymentItemQueryParams): UseQueryResult<PaginatedResponse<SundryPaymentItem>, Error> => {
+    return useQuery({
+        queryKey: ['sundry-payment-items', params],
+        queryFn: () => sundryPaymentItemsApi.getAll(params),
+    });
+};
+
+export const useSundryPaymentItem = (id: number): UseQueryResult<SundryPaymentItem, Error> => {
+    return useQuery({
+        queryKey: ['sundry-payment-items', id],
+        queryFn: () => sundryPaymentItemsApi.getById(id),
+        enabled: !!id,
+    });
+};
+
+export const useCreateSundryPaymentItem = (): UseMutationResult<SundryPaymentItem, Error, CreateSundryPaymentItemRequest> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (itemData: CreateSundryPaymentItemRequest) => sundryPaymentItemsApi.create(itemData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sundry-payment-items'] });
+            toast.success('Sundry payment item created successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useUpdateSundryPaymentItem = (): UseMutationResult<SundryPaymentItem, Error, { id: number; data: UpdateSundryPaymentItemRequest }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: UpdateSundryPaymentItemRequest }) => sundryPaymentItemsApi.update(id, data),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['sundry-payment-items'] });
+            queryClient.invalidateQueries({ queryKey: ['sundry-payment-items', variables.id] });
+            toast.success('Sundry payment item updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+export const useDeleteSundryPaymentItem = (): UseMutationResult<void, Error, number> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: number) => sundryPaymentItemsApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sundry-payment-items'] });
+            toast.success('Sundry payment item deleted successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
         },
     });
 };

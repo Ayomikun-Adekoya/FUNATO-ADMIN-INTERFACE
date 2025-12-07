@@ -27,12 +27,12 @@ export default function AdmissionsListPage() {
         const lastName = admission.admission_application.last_name?.toLowerCase() || '';
         const email = admission.admission_application.email?.toLowerCase() || '';
         const jambReg = admission.admission_application.student?.jamb_registration?.toLowerCase() || '';
-        
+
         return appNumber.includes(searchLower) ||
-               firstName.includes(searchLower) ||
-               lastName.includes(searchLower) ||
-               email.includes(searchLower) ||
-               jambReg.includes(searchLower);
+            firstName.includes(searchLower) ||
+            lastName.includes(searchLower) ||
+            email.includes(searchLower) ||
+            jambReg.includes(searchLower);
     }) || [];
 
     const columns = [

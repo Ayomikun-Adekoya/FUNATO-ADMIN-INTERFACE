@@ -32,12 +32,12 @@ export default function ScreeningsListPage() {
         const lastName = screening.admission_application?.student?.last_name?.toLowerCase() || '';
         const email = screening.admission_application?.student?.email?.toLowerCase() || '';
         const jambReg = screening.admission_application?.student?.jamb_registration?.toLowerCase() || '';
-        
+
         return appNumber.includes(searchLower) ||
-               firstName.includes(searchLower) ||
-               lastName.includes(searchLower) ||
-               email.includes(searchLower) ||
-               jambReg.includes(searchLower);
+            firstName.includes(searchLower) ||
+            lastName.includes(searchLower) ||
+            email.includes(searchLower) ||
+            jambReg.includes(searchLower);
     }) || [];
 
     const handleEdit = (screening: Screening) => {

@@ -50,7 +50,7 @@ export type UpdateUserFormData = z.infer<typeof updateUserSchema>;
 export const createRoleSchema = z.object({
     name: z.string().min(2, 'Role name must be at least 2 characters'),
     description: z.string().optional(),
-    permissions: z.array(z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val)).optional(),
+    permissions: z.array(z.number()).optional(),
 });
 
 export type CreateRoleFormData = z.infer<typeof createRoleSchema>;
@@ -58,7 +58,7 @@ export type CreateRoleFormData = z.infer<typeof createRoleSchema>;
 export const updateRoleSchema = z.object({
     name: z.string().min(2, 'Role name must be at least 2 characters').optional(),
     description: z.string().optional(),
-    permissions: z.array(z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val)).optional(),
+    permissions: z.array(z.number()).optional(),
 });
 
 export type UpdateRoleFormData = z.infer<typeof updateRoleSchema>;
@@ -175,7 +175,7 @@ export const createScreeningSchema = z.object({
     screening_type: z.string().min(1, 'Screening type is required'),
     screening_date: z.string().min(1, 'Screening date is required'),
     venue: z.string().min(1, 'Venue is required'),
-    status: z.enum(['scheduled', 'ongoing', 'completed', 'cancelled']).optional(),
+    status: z.enum(['pending', 'in_progress', 'completed', 'failed']).optional(),
     description: z.string().optional(),
     max_participants: z.number().min(1, 'Maximum participants must be at least 1').optional(),
 });
@@ -186,7 +186,7 @@ export const updateScreeningSchema = z.object({
     screening_type: z.string().min(1, 'Screening type is required').optional(),
     screening_date: z.string().optional(),
     venue: z.string().optional(),
-    status: z.enum(['scheduled', 'ongoing', 'completed', 'cancelled']).optional(),
+    status: z.enum(['pending', 'in_progress', 'completed', 'failed']).optional(),
     description: z.string().optional(),
     max_participants: z.number().min(1, 'Maximum participants must be at least 1').optional(),
 });

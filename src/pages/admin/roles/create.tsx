@@ -4,22 +4,27 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RoleForm from '@/components/RoleForm';
 import { useCreateRole } from '@/lib/queries';
-import { CreateRoleFormData } from '@/lib/validators';
+import { CreateRoleFormData, UpdateRoleFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateRolePage() {
     const router = useRouter();
     const createRoleMutation = useCreateRole();
 
-    const handleSubmit = async (data: CreateRoleFormData) => {
+    const handleSubmit = async (data: CreateRoleFormData | UpdateRoleFormData) => {
         console.log('Submitting role data:', data);
         try {
-            await createRoleMutation.mutateAsync(data);
+            await createRoleMutation.mutateAsync({
+                name: data.name!,
+                description: data.description,
+                permissions: data.permissions,
+            });
             toast.success('Role created successfully!');
             router.push('/admin/roles');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Create role error:', error);
-            toast.error(error.response?.data?.message || 'Failed to create role. Please try again.');
+            const message = error instanceof Error ? error.message : 'Failed to create role. Please try again.';
+            toast.error(message);
         }
     };
 

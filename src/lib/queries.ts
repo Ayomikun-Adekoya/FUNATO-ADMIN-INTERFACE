@@ -974,28 +974,35 @@ export const useDeleteProgram = (): UseMutationResult<void, Error, number> => {
     });
 };
 
-export function useCustomQuery(queryKey, queryFn, options) {
-    return useQuery(queryKey, async () => {
-        try {
-            const data = await queryFn();
-            toast.success('Data fetched successfully!');
-            return data;
-        } catch (error) {
-            toast.error('Failed to fetch data. Please try again.');
-            throw error;
-        }
-    }, options);
+export function useCustomQuery<T>(queryKey: unknown[], queryFn: () => Promise<T>, options?: unknown) {
+    return useQuery({
+        queryKey,
+        queryFn: async () => {
+            try {
+                const data = await queryFn();
+                toast.success('Data fetched successfully!');
+                return data;
+            } catch (error) {
+                toast.error('Failed to fetch data. Please try again.');
+                throw error;
+            }
+        },
+        ...((options as object) || {}),
+    });
 }
 
-export function useCustomMutation(mutationFn, options) {
-    return useMutation(async (variables) => {
-        try {
-            const data = await mutationFn(variables);
-            toast.success('Operation completed successfully!');
-            return data;
-        } catch (error) {
-            toast.error('Operation failed. Please try again.');
-            throw error;
-        }
-    }, options);
+export function useCustomMutation<T, V>(mutationFn: (variables: V) => Promise<T>, options?: unknown) {
+    return useMutation({
+        mutationFn: async (variables: V) => {
+            try {
+                const data = await mutationFn(variables);
+                toast.success('Operation completed successfully!');
+                return data;
+            } catch (error) {
+                toast.error('Operation failed. Please try again.');
+                throw error;
+            }
+        },
+        ...((options as object) || {}),
+    });
 }

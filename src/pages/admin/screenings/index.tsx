@@ -15,13 +15,13 @@ export default function ScreeningsListPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'pending' | 'in_progress' | 'completed' | 'failed' | ''>('');
     const [viewModal, setViewModal] = useState<{ open: boolean; screening: Screening | null }>({
         open: false,
         screening: null,
     });
 
-    const { data, isLoading } = useScreenings({ page, per_page: perPage, search, status: statusFilter });
+    const { data, isLoading } = useScreenings({ page, per_page: perPage, search, status: statusFilter || undefined });
 
     const handleEdit = (screening: Screening) => {
         router.push({
@@ -159,7 +159,7 @@ export default function ScreeningsListPage() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => {
-                                    setStatusFilter(e.target.value);
+                                    setStatusFilter(e.target.value as typeof statusFilter);
                                     setPage(1);
                                 }}
                                 className="input w-full sm:w-48"

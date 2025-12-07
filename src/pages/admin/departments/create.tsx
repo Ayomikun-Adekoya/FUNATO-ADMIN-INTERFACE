@@ -4,21 +4,21 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DepartmentForm from '@/components/DepartmentForm';
 import { useCreateDepartment } from '@/lib/queries';
-import { CreateDepartmentFormData } from '@/lib/validators';
+import { CreateDepartmentFormData, UpdateDepartmentFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateDepartmentPage() {
     const router = useRouter();
     const createDepartmentMutation = useCreateDepartment();
 
-    const handleSubmit = async (data: CreateDepartmentFormData) => {
+    const handleSubmit = async (data: CreateDepartmentFormData | UpdateDepartmentFormData) => {
         try {
             await createDepartmentMutation.mutateAsync({
-                name: data.name,
-                code: data.code,
-                faculty_id: data.faculty_id,
+                name: data.name!,
+                code: data.code!,
+                faculty_id: data.faculty_id!,
                 description: data.description,
-            } as any);
+            });
             toast.success('Department created successfully!');
             router.push('/admin/departments');
         } catch (error) {

@@ -4,7 +4,7 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserForm from '@/components/UserForm';
 import { useCreateUser, useRoles } from '@/lib/queries';
-import { CreateUserFormData } from '@/lib/validators';
+import { CreateUserFormData, UpdateUserFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateUserPage() {
@@ -12,13 +12,13 @@ export default function CreateUserPage() {
   const createUserMutation = useCreateUser();
   const { data: rolesData } = useRoles();
 
-  const handleSubmit = async (data: CreateUserFormData) => {
+  const handleSubmit = async (data: CreateUserFormData | UpdateUserFormData) => {
     try {
       await createUserMutation.mutateAsync({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        password_confirmation: data.password_confirmation,
+        name: data.name!,
+        email: data.email!,
+        password: data.password!,
+        password_confirmation: data.password_confirmation!,
         roles: data.roles || [],
       });
       toast.success('User created successfully!');

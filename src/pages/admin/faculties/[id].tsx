@@ -17,7 +17,7 @@ export default function EditFacultyPage() {
 
     const handleSubmit = async (data: UpdateFacultyFormData) => {
         try {
-            const payload: Record<string, any> = {};
+            const payload: Record<string, unknown> = {};
             if (data.name) payload.name = data.name;
             if (data.code) payload.code = data.code;
             if (data.description) payload.description = data.description;
@@ -25,7 +25,7 @@ export default function EditFacultyPage() {
 
             await updateFacultyMutation.mutateAsync({
                 id: facultyId,
-                ...payload,
+                data: payload,
             });
             toast.success('Faculty updated successfully!');
             router.push('/admin/faculties');

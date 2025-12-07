@@ -25,16 +25,12 @@ export default function FacultyForm({ faculty, onSubmit, isLoading = false }: Fa
                 name: faculty.name,
                 code: faculty.code,
                 description: faculty.description || '',
-                dean_name: faculty.dean_name || '',
-                established_date: faculty.established_date?.split('T')[0],
                 is_active: faculty.is_active,
             }
             : {
                 name: '',
                 code: '',
                 description: '',
-                dean_name: '',
-                established_date: '',
                 is_active: true,
             },
     });

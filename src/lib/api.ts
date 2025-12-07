@@ -852,7 +852,7 @@ export const programsApi = {
 // Export token helpers for auth.ts
 export { getToken, setToken, removeToken };
 
-export async function apiCall(endpoint, options) {
+export async function apiCall(endpoint: string, options: RequestInit): Promise<unknown> {
     try {
         const response = await fetch(endpoint, options);
         if (!response.ok) {

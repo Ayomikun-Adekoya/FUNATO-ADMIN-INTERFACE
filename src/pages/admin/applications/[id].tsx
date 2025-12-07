@@ -20,7 +20,7 @@ import type { Application, ApplicationDocument } from '@/types/api';
 export default function ApplicationDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
-  const applicantId = typeof id === 'string' ? id : '';
+  const applicantId = typeof id === 'string' ? parseInt(id, 10) : 0;
 
   const { data: application, isLoading } = useApplication(applicantId);
   const { data: documents } = useApplicationDocuments(applicantId);

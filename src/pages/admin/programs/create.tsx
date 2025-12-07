@@ -4,22 +4,22 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ProgramForm from '@/components/ProgramForm';
 import { useCreateProgram } from '@/lib/queries';
-import { CreateProgramFormData } from '@/lib/validators';
+import { CreateProgramFormData, UpdateProgramFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateProgramPage() {
     const router = useRouter();
     const createProgramMutation = useCreateProgram();
 
-    const handleSubmit = async (data: CreateProgramFormData) => {
+    const handleSubmit = async (data: CreateProgramFormData | UpdateProgramFormData) => {
         try {
             await createProgramMutation.mutateAsync({
-                name: data.name,
-                code: data.code,
-                department_id: data.department_id,
+                name: data.name!,
+                code: data.code!,
+                department_id: data.department_id!,
                 description: data.description,
-                duration: data.duration,
-                degree_type: data.degree_type,
+                duration: data.duration!,
+                degree_type: data.degree_type!,
                 is_active: data.is_active,
             });
             toast.success('Program created successfully!');

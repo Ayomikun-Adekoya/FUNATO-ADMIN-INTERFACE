@@ -20,18 +20,18 @@ export default function ScreeningForm({ screening, onSubmit, isLoading = false }
         resolver: zodResolver(isEditing ? updateScreeningSchema : createScreeningSchema),
         defaultValues: screening
             ? {
-                screening_type: screening.screening_type,
-                screening_date: screening.screening_date?.split('T')[0],
-                venue: screening.venue,
+                screening_type: '',
+                screening_date: screening.screening_data?.scheduled_date?.split('T')[0] || '',
+                venue: screening.screening_data?.venue || '',
                 status: screening.status,
-                description: screening.description || '',
-                max_participants: screening.max_participants || undefined,
+                description: screening.notes || '',
+                max_participants: undefined,
             }
             : {
                 screening_type: '',
                 screening_date: '',
                 venue: '',
-                status: 'scheduled',
+                status: 'pending',
                 description: '',
                 max_participants: undefined,
             },

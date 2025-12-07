@@ -14,9 +14,9 @@ export default function AdmissionsListPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
-    const [decisionFilter, setDecisionFilter] = useState('');
+    const [decisionFilter, setDecisionFilter] = useState<'pending' | 'admitted' | 'rejected' | 'waitlisted' | ''>('');
 
-    const { data, isLoading } = useAdmissions({ page, per_page: perPage, search, decision: decisionFilter });
+    const { data, isLoading } = useAdmissions({ page, per_page: perPage, search, decision: decisionFilter || undefined });
 
     const columns = [
         {
@@ -135,14 +135,15 @@ export default function AdmissionsListPage() {
                             <select
                                 value={decisionFilter}
                                 onChange={(e) => {
-                                    setDecisionFilter(e.target.value);
+                                    setDecisionFilter(e.target.value as typeof decisionFilter);
                                     setPage(1);
                                 }}
                                 className="input w-full sm:w-48"
                             >
                                 <option value="">All Decisions</option>
                                 <option value="admitted">Admitted</option>
-                                <option value="not_admitted">Not Admitted</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="waitlisted">Waitlisted</option>
                                 <option value="pending">Pending</option>
                             </select>
                         </div>

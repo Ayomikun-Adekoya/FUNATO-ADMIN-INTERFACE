@@ -4,20 +4,20 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ModeOfEntryForm from '@/components/ModeOfEntryForm';
 import { useCreateModeOfEntry } from '@/lib/queries';
-import { CreateModeOfEntryFormData } from '@/lib/validators';
+import { CreateModeOfEntryFormData, UpdateModeOfEntryFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateModeOfEntryPage() {
     const router = useRouter();
     const createModeOfEntryMutation = useCreateModeOfEntry();
 
-    const handleSubmit = async (data: CreateModeOfEntryFormData) => {
+    const handleSubmit = async (data: CreateModeOfEntryFormData | UpdateModeOfEntryFormData) => {
         try {
             await createModeOfEntryMutation.mutateAsync({
-                name: data.name,
-                code: data.code,
+                name: data.name!,
+                code: data.code!,
                 description: data.description,
-                is_active: data.is_active,
+                is_active: data.is_active ?? true,
             });
             toast.success('Mode of entry created successfully!');
             router.push('/admin/mode-of-entries');

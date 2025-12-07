@@ -13,7 +13,9 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             const response = error.response;
             const status = response?.status;
             const errorData = response?.data as Record<string, unknown>;
-            const message = errorData?.message || error.message || 'An unexpected error occurred';
+            const message = typeof errorData?.message === 'string'
+                ? errorData.message
+                : error.message || 'An unexpected error occurred';
 
             if (status === 403) {
                 return {

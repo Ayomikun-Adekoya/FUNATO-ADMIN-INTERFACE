@@ -4,18 +4,18 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import FacultyForm from '@/components/FacultyForm';
 import { useCreateFaculty } from '@/lib/queries';
-import { CreateFacultyFormData } from '@/lib/validators';
+import { CreateFacultyFormData, UpdateFacultyFormData } from '@/lib/validators';
 import { toast } from 'react-toastify';
 
 export default function CreateFacultyPage() {
     const router = useRouter();
     const createFacultyMutation = useCreateFaculty();
 
-    const handleSubmit = async (data: CreateFacultyFormData) => {
+    const handleSubmit = async (data: CreateFacultyFormData | UpdateFacultyFormData) => {
         try {
             await createFacultyMutation.mutateAsync({
-                name: data.name,
-                code: data.code,
+                name: data.name!,
+                code: data.code!,
                 description: data.description,
             });
             toast.success('Faculty created successfully!');

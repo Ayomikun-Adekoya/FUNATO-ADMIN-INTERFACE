@@ -154,10 +154,10 @@ export default function FacultiesListPage() {
                     <Modal
                         isOpen={deleteModal.open}
                         onClose={() => setDeleteModal({ open: false, faculty: null })}
-                        title="Delete Faculty"
+                        title="Delete College"
                     >
                         <p className="text-gray-600 dark:text-gray-400 mb-6">
-                            Are you sure you want to delete the faculty &quot;{deleteModal.faculty?.name}&quot;?
+                            Are you sure you want to delete the college &quot;{deleteModal.faculty?.name}&quot;?
                             This action cannot be undone.
                         </p>
                         <div className="flex justify-end gap-3">

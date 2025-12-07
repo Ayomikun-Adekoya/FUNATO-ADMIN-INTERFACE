@@ -23,6 +23,23 @@ export default function ScreeningsListPage() {
 
     const { data, isLoading } = useScreenings({ page, per_page: perPage, search, status: statusFilter || undefined });
 
+    // Client-side filter as workaround for backend search issues
+    const filteredData = data?.data.filter((screening) => {
+        if (!search) return true;
+        const searchLower = search.toLowerCase();
+        const appNumber = screening.admission_application?.application_number?.toLowerCase() || '';
+        const firstName = screening.admission_application?.student?.first_name?.toLowerCase() || '';
+        const lastName = screening.admission_application?.student?.last_name?.toLowerCase() || '';
+        const email = screening.admission_application?.student?.email?.toLowerCase() || '';
+        const jambReg = screening.admission_application?.student?.jamb_registration?.toLowerCase() || '';
+        
+        return appNumber.includes(searchLower) ||
+               firstName.includes(searchLower) ||
+               lastName.includes(searchLower) ||
+               email.includes(searchLower) ||
+               jambReg.includes(searchLower);
+    }) || [];
+
     const handleEdit = (screening: Screening) => {
         router.push({
             pathname: `/admin/screenings/${screening.id}`,
@@ -54,6 +71,18 @@ export default function ScreeningsListPage() {
                             {student?.email || 'N/A'}
                         </div>
                     </div>
+                );
+            },
+        },
+        {
+            key: 'jamb_registration',
+            header: 'JAMB Reg No.',
+            render: (screening: Screening) => {
+                const jambReg = screening.admission_application?.student?.jamb_registration;
+                return (
+                    <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
+                        {jambReg || 'N/A'}
+                    </span>
                 );
             },
         },
@@ -134,7 +163,7 @@ export default function ScreeningsListPage() {
                             <div className="relative flex-1">
                                 <input
                                     type="text"
-                                    placeholder="Search screenings..."
+                                    placeholder="Search by application no., name, email, or JAMB reg number..."
                                     value={search}
                                     onChange={(e) => {
                                         setSearch(e.target.value);
@@ -172,10 +201,15 @@ export default function ScreeningsListPage() {
                             </select>
                         </div>
 
-                        <Table columns={columns} data={data?.data || []} isLoading={isLoading} />
+                        <Table columns={columns} data={filteredData} isLoading={isLoading} />
 
                         {data && (
                             <div className="mt-6">
+                                {search && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        Showing {filteredData.length} of {data.total} results (client-side filtered)
+                                    </p>
+                                )}
                                 <Pagination
                                     currentPage={data.current_page}
                                     totalPages={data.last_page}

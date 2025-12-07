@@ -43,13 +43,13 @@ export default function FacultyForm({ faculty, onSubmit, isLoading = false }: Fa
                 {/* Faculty Name */}
                 <div>
                     <label htmlFor="name" className="label">
-                        Faculty Name <span className="text-red-500">*</span>
+                        College Name <span className="text-red-500">*</span>
                     </label>
                     <input
                         {...register('name')}
                         id="name"
                         type="text"
-                        placeholder="e.g., Faculty of Science"
+                        placeholder="e.g., College of Science"
                         className="input"
                     />
                     {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>}
@@ -58,7 +58,7 @@ export default function FacultyForm({ faculty, onSubmit, isLoading = false }: Fa
                 {/* Faculty Code */}
                 <div>
                     <label htmlFor="code" className="label">
-                        Faculty Code <span className="text-red-500">*</span>
+                        College Code <span className="text-red-500">*</span>
                     </label>
                     <input
                         {...register('code')}
@@ -80,7 +80,7 @@ export default function FacultyForm({ faculty, onSubmit, isLoading = false }: Fa
                     {...register('description')}
                     id="description"
                     rows={3}
-                    placeholder="Brief description of the faculty"
+                    placeholder="Brief description of the college"
                     className="input"
                 />
                 {errors.description && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>}
@@ -108,7 +108,7 @@ export default function FacultyForm({ faculty, onSubmit, isLoading = false }: Fa
                     </button>
                 </label>
                 <p className="mt-1 text-sm text-gray-500">
-                    {isActive ? 'Faculty is active' : 'Faculty is inactive'}
+                    {isActive ? 'College is active' : 'College is inactive'}
                 </p>
             </div>
 

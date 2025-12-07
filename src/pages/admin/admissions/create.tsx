@@ -35,7 +35,8 @@ export default function CreateAdmissionPage() {
                 student.application_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 student.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 student.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.jamb_information?.jamb_registration_number?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -107,7 +108,7 @@ export default function CreateAdmissionPage() {
                     <div className="mb-6">
                         <input
                             type="text"
-                            placeholder="Search by Admission Number or Name"
+                            placeholder="Search by application number, name, email, or JAMB reg number..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="input input-bordered w-full"
@@ -129,6 +130,7 @@ export default function CreateAdmissionPage() {
                                                 <th>Application Number</th>
                                                 <th>Name</th>
                                                 <th>Email</th>
+                                                <th>JAMB Reg No.</th>
                                                 <th>Phone</th>
                                                 <th>Status</th>
                                                 <th>Action</th>
@@ -142,6 +144,7 @@ export default function CreateAdmissionPage() {
                                                         {student.first_name || 'N/A'} {student.last_name || ''} {student.other_name || ''}
                                                     </td>
                                                     <td>{student.email}</td>
+                                                    <td className="font-mono text-sm">{student.jamb_information?.jamb_registration_number || 'N/A'}</td>
                                                     <td>{student.phone}</td>
                                                     <td>
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${student.status === 'submitted'

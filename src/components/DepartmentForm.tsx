@@ -73,17 +73,17 @@ export default function DepartmentForm({ department, onSubmit, isLoading = false
                     {errors.code && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.code.message}</p>}
                 </div>
 
-                {/* Faculty */}
+                {/* College */}
                 <div>
                     <label htmlFor="faculty_id" className="label">
-                        Faculty <span className="text-red-500">*</span>
+                        College <span className="text-red-500">*</span>
                     </label>
                     <select
                         {...register('faculty_id', { valueAsNumber: true })}
                         id="faculty_id"
                         className="input"
                     >
-                        <option value="">Select Faculty</option>
+                        <option value="">Select College</option>
                         {facultiesData?.data.map((faculty) => (
                             <option key={faculty.id} value={faculty.id}>
                                 {faculty.name}

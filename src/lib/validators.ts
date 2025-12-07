@@ -203,7 +203,7 @@ export const createAdmissionSchema = z.object({
     screening_score: z.number().min(0, 'Score must be 0 or greater').optional(),
     interview_date: z.string().optional(),
     remarks: z.string().optional(),
-    faculty_id: z.number().min(1, 'Faculty is required').optional(),
+    faculty_id: z.number().min(1, 'College is required').optional(),
     department_id: z.number().min(1, 'Department is required').optional(),
     mode_of_entry_id: z.number().min(1, 'Mode of entry is required').optional(),
 });
@@ -219,7 +219,7 @@ export const updateAdmissionSchema = z.object({
     screening_score: z.number().min(0, 'Score must be 0 or greater').optional(),
     interview_date: z.string().optional(),
     remarks: z.string().optional(),
-    faculty_id: z.number().min(1, 'Faculty is required').optional(),
+    faculty_id: z.number().min(1, 'College is required').optional(),
     department_id: z.number().min(1, 'Department is required').optional(),
     mode_of_entry_id: z.number().min(1, 'Mode of entry is required').optional(),
 });
@@ -228,8 +228,8 @@ export type UpdateAdmissionFormData = z.infer<typeof updateAdmissionSchema>;
 
 // Faculty schemas
 export const createFacultySchema = z.object({
-    name: z.string().min(2, 'Faculty name must be at least 2 characters'),
-    code: z.string().min(1, 'Faculty code is required'),
+    name: z.string().min(2, 'College name must be at least 2 characters'),
+    code: z.string().min(1, 'College code is required'),
     description: z.string().optional(),
     is_active: z.boolean().optional(),
 });
@@ -237,8 +237,8 @@ export const createFacultySchema = z.object({
 export type CreateFacultyFormData = z.infer<typeof createFacultySchema>;
 
 export const updateFacultySchema = z.object({
-    name: z.string().min(2, 'Faculty name must be at least 2 characters').optional(),
-    code: z.string().min(1, 'Faculty code is required').optional(),
+    name: z.string().min(2, 'College name must be at least 2 characters').optional(),
+    code: z.string().min(1, 'College code is required').optional(),
     description: z.string().optional(),
     is_active: z.boolean().optional(),
 });
@@ -249,7 +249,7 @@ export type UpdateFacultyFormData = z.infer<typeof updateFacultySchema>;
 export const createDepartmentSchema = z.object({
     name: z.string().min(2, 'Department name must be at least 2 characters'),
     code: z.string().min(1, 'Department code is required'),
-    faculty_id: z.number().min(1, 'Faculty is required'),
+    faculty_id: z.number().min(1, 'College is required'),
     description: z.string().optional(),
 });
 
@@ -258,7 +258,7 @@ export type CreateDepartmentFormData = z.infer<typeof createDepartmentSchema>;
 export const updateDepartmentSchema = z.object({
     name: z.string().min(2, 'Department name must be at least 2 characters').optional(),
     code: z.string().min(1, 'Department code is required').optional(),
-    faculty_id: z.number().min(1, 'Faculty is required').optional(),
+    faculty_id: z.number().min(1, 'College is required').optional(),
     description: z.string().optional(),
     is_active: z.boolean().optional(),
 });

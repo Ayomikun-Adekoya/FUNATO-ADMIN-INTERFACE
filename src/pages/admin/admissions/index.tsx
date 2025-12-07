@@ -18,6 +18,23 @@ export default function AdmissionsListPage() {
 
     const { data, isLoading } = useAdmissions({ page, per_page: perPage, search, decision: decisionFilter || undefined });
 
+    // Client-side filter as workaround for backend search issues
+    const filteredData = data?.data.filter((admission) => {
+        if (!search) return true;
+        const searchLower = search.toLowerCase();
+        const appNumber = admission.admission_application.application_number?.toLowerCase() || '';
+        const firstName = admission.admission_application.first_name?.toLowerCase() || '';
+        const lastName = admission.admission_application.last_name?.toLowerCase() || '';
+        const email = admission.admission_application.email?.toLowerCase() || '';
+        const jambReg = admission.admission_application.student?.jamb_registration?.toLowerCase() || '';
+        
+        return appNumber.includes(searchLower) ||
+               firstName.includes(searchLower) ||
+               lastName.includes(searchLower) ||
+               email.includes(searchLower) ||
+               jambReg.includes(searchLower);
+    }) || [];
+
     const columns = [
         {
             key: 'application_number',
@@ -36,6 +53,15 @@ export default function AdmissionsListPage() {
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">{admission.admission_application.email}</div>
                 </div>
+            ),
+        },
+        {
+            key: 'jamb_registration',
+            header: 'JAMB Reg No.',
+            render: (admission: Admission) => (
+                <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
+                    {admission.admission_application.student?.jamb_registration || 'N/A'}
+                </span>
             ),
         },
         {
@@ -110,7 +136,7 @@ export default function AdmissionsListPage() {
                             <div className="relative flex-1">
                                 <input
                                     type="text"
-                                    placeholder="Search admissions..."
+                                    placeholder="Search by application no., name, email, or JAMB reg number..."
                                     value={search}
                                     onChange={(e) => {
                                         setSearch(e.target.value);
@@ -148,10 +174,15 @@ export default function AdmissionsListPage() {
                             </select>
                         </div>
 
-                        <Table columns={columns} data={data?.data || []} isLoading={isLoading} />
+                        <Table columns={columns} data={filteredData} isLoading={isLoading} />
 
                         {data && (
                             <div className="mt-6">
+                                {search && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        Showing {filteredData.length} of {data.total} results (client-side filtered)
+                                    </p>
+                                )}
                                 <Pagination
                                     currentPage={data.current_page}
                                     totalPages={data.last_page}

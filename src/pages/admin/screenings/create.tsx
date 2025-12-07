@@ -38,7 +38,8 @@ export default function CreateScreeningPage() {
                 admission.admission_application?.application_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 admission.admission_application?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 admission.admission_application?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                admission.admission_application?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                admission.admission_application?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                admission.admission_application?.student?.jamb_registration?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -125,7 +126,7 @@ export default function CreateScreeningPage() {
                     <div className="mb-6">
                         <input
                             type="text"
-                            placeholder="Search by application number, name, or email..."
+                            placeholder="Search by application number, name, email, or JAMB reg number..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="input w-full"
@@ -168,6 +169,9 @@ export default function CreateScreeningPage() {
                                             Email
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            JAMB Reg No.
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Phone
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -194,6 +198,11 @@ export default function CreateScreeningPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     {admission.admission_application?.email}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
+                                                    {admission.admission_application?.student?.jamb_registration || 'N/A'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -267,6 +276,10 @@ export default function CreateScreeningPage() {
                                             <p className="font-medium text-gray-900 dark:text-gray-100">{selectedStudent.admission_application?.email}</p>
                                         </div>
                                         <div>
+                                            <p className="text-gray-500 dark:text-gray-400">JAMB Reg No.</p>
+                                            <p className="font-medium font-mono text-gray-900 dark:text-gray-100">{selectedStudent.admission_application?.student?.jamb_registration || 'N/A'}</p>
+                                        </div>
+                                        <div>
                                             <p className="text-gray-500 dark:text-gray-400">Phone</p>
                                             <p className="font-medium text-gray-900 dark:text-gray-100">{selectedStudent.admission_application?.phone || 'N/A'}</p>
                                         </div>
@@ -275,7 +288,7 @@ export default function CreateScreeningPage() {
                                             <p className="font-medium text-gray-900 dark:text-gray-100">{selectedStudent.admission_application?.preferred_course || 'N/A'}</p>
                                         </div>
                                         <div>
-                                            <p className="text-gray-500 dark:text-gray-400">Faculty</p>
+                                            <p className="text-gray-500 dark:text-gray-400">College</p>
                                             <p className="font-medium text-gray-900 dark:text-gray-100">
                                                 {selectedStudent.admission_application?.faculty || 'N/A'}
                                             </p>

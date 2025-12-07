@@ -27,11 +27,11 @@ export default function EditFacultyPage() {
                 id: facultyId,
                 data: payload,
             });
-            toast.success('Faculty updated successfully!');
+            toast.success('College updated successfully!');
             router.push('/admin/faculties');
         } catch (error) {
-            console.error('Update faculty error:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to update faculty';
+            console.error('Update college error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update college';
             toast.error(errorMessage);
         }
     };
@@ -54,7 +54,7 @@ export default function EditFacultyPage() {
                 <Layout>
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Faculty Not Found</h1>
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">College Not Found</h1>
                             <Link href="/admin/faculties" className="link mt-4 inline-block">
                                 Back to Faculties
                             </Link>
@@ -83,8 +83,8 @@ export default function EditFacultyPage() {
                             <span>Edit</span>
                         </div>
 
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit Faculty</h1>
-                        <p className="mt-2 text-gray-600 dark:text-gray-400">Update faculty details</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit College</h1>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">Update college details</p>
                     </div>
 
                     <div className="card">

@@ -18,12 +18,12 @@ export default function CreateFacultyPage() {
                 code: data.code!,
                 description: data.description,
             });
-            toast.success('Faculty created successfully!');
+            toast.success('College created successfully!');
             router.push('/admin/faculties');
         } catch (error) {
-            console.error('Create faculty error:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create faculty';
-            toast.error('Failed to create faculty. Please try again.');
+            console.error('Create college error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create college';
+            toast.error('Failed to create college. Please try again.');
         }
     };
 
@@ -45,8 +45,8 @@ export default function CreateFacultyPage() {
                             <span>Create</span>
                         </div>
 
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Create Faculty</h1>
-                        <p className="mt-2 text-gray-600 dark:text-gray-400">Add a new faculty to the system</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Create College</h1>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">Add a new college to the system</p>
                     </div>
 
                     <div className="card">

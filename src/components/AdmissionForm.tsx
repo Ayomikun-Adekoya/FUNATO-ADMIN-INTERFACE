@@ -163,17 +163,17 @@ export default function AdmissionForm({ admission, onSubmit, isLoading = false }
                     {errors.interview_date && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.interview_date.message}</p>}
                 </div>
 
-                {/* Faculty */}
+                {/* College */}
                 <div>
                     <label htmlFor="faculty_id" className="label">
-                        Faculty
+                        College
                     </label>
                     <select
                         {...register('faculty_id', { valueAsNumber: true })}
                         id="faculty_id"
                         className="input"
                     >
-                        <option value="">Select Faculty</option>
+                        <option value="">Select College</option>
                         {facultiesData?.data.map((faculty) => (
                             <option key={faculty.id} value={faculty.id}>
                                 {faculty.name}

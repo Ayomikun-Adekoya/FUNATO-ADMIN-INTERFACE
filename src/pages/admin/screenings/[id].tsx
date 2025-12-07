@@ -140,7 +140,7 @@ export default function EditScreeningPage() {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Faculty</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">College</p>
                                     <p className="font-semibold text-gray-900 dark:text-gray-100">
                                         {screening.admission_application?.faculty?.name || 'N/A'}
                                     </p>

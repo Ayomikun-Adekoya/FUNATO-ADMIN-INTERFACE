@@ -142,7 +142,7 @@ export default function Layout({ children }: LayoutProps) {
 
     const admissionNavigation = [
         {
-            name: 'Faculties',
+            name: 'Colleges',
             href: '/admin/faculties',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

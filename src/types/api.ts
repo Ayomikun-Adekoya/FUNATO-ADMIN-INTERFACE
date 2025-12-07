@@ -538,6 +538,7 @@ export interface Screening {
             last_name: string;
             email: string;
             phone: string;
+            jamb_registration: string;
         };
         programme: {
             id: number;

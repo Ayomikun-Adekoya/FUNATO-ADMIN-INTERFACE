@@ -150,12 +150,12 @@ api.interceptors.response.use(
     (error: AxiosError) => {
         if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
             // Never log sensitive data like passwords or tokens
-            const sanitizedResponseData = error.response?.data 
-                ? (typeof error.response.data === 'object' 
+            const sanitizedResponseData = error.response?.data
+                ? (typeof error.response.data === 'object'
                     ? { ...error.response.data, password: '[REDACTED]', token: '[REDACTED]' }
                     : error.response.data)
                 : undefined;
-            
+
             console.error('API Error Details:', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
@@ -394,13 +394,13 @@ export const screeningsApi = {
         return data.data;
     },
 
-update: async (id: number, screeningData: UpdateScreeningRequest): Promise<Screening> => {
-    const { data } = await api.put<ApiResponse<Screening>>(
-        `/admin/admission/screenings/${id}`,
-        screeningData
-    );
-    return data.data;
-},
+    update: async (id: number, screeningData: UpdateScreeningRequest): Promise<Screening> => {
+        const { data } = await api.put<ApiResponse<Screening>>(
+            `/admin/admission/screenings/${id}`,
+            screeningData
+        );
+        return data.data;
+    },
 
 };
 
@@ -598,14 +598,14 @@ export const applicationsApi = {
         return data;
     },
 
-// Admin: Update application (can change status)
-updateAdmin: async (applicantId: string, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
-    const { data } = await api.put<ApiResponse<Application>>(
-        `/recruitment/applications/${encodeURIComponent(applicantId)}`,
-        applicationData
-    );
-    return data.data;
-},
+    // Admin: Update application (can change status)
+    updateAdmin: async (applicantId: string, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
+        const { data } = await api.put<ApiResponse<Application>>(
+            `/recruitment/applications/${encodeURIComponent(applicantId)}`,
+            applicationData
+        );
+        return data.data;
+    },
 
 
     // Admin: Delete application by applicant_id
@@ -636,19 +636,19 @@ updateAdmin: async (applicantId: string, applicationData: UpdateApplicationAdmin
     },
 
     // Owner: Update own application (cannot change status)
-// TODO: Use X-CSRF-TOKEN for owner updates
-updateOwner: async (applicantId: string, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
-    const csrfToken = process.env.CSRF_API_KEY;
-    const headers: Record<string, string> = {};
-    if (csrfToken) {
-        headers['X-CSRF-TOKEN'] = csrfToken;
-    }
+    // TODO: Use X-CSRF-TOKEN for owner updates
+    updateOwner: async (applicantId: string, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
+        const csrfToken = process.env.CSRF_API_KEY;
+        const headers: Record<string, string> = {};
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken;
+        }
 
-    const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${encodeURIComponent(applicantId)}`, applicationData, {
-        headers,
-    });
-    return data.data;
-},
+        const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${encodeURIComponent(applicantId)}`, applicationData, {
+            headers,
+        });
+        return data.data;
+    },
 
 };
 

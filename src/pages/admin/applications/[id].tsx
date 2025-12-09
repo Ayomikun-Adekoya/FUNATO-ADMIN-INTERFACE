@@ -10,7 +10,6 @@ const PDFViewer = dynamic(() => import('@/components/PDFViewer'), { ssr: false }
 
 import {
   useApplication,
-  useApplicationDocuments,
   useUpdateApplicationAdmin,
   useDeleteApplication,
 } from '@/lib/queries';
@@ -27,7 +26,6 @@ export default function ApplicationDetailsPage() {
   const applicantId = typeof id === 'string' ? id : '';
 
   const { data: application, isLoading } = useApplication(applicantId);
-  const { data: documents } = useApplicationDocuments(applicantId);
   const updateMutation = useUpdateApplicationAdmin();
   const deleteMutation = useDeleteApplication();
 
@@ -43,7 +41,7 @@ export default function ApplicationDetailsPage() {
   const handleUpdateStatus = async () => {
     if (!newStatus) return;
     try {
-      await updateMutation.mutateAsync({ id: applicantId, data: { status: newStatus as any } });
+      await updateMutation.mutateAsync({ applicantId, data: { status: newStatus as any } });
       setStatusModal(false);
       toast.success('Status updated successfully!');
     } catch (error: any) {
@@ -190,34 +188,6 @@ export default function ApplicationDetailsPage() {
               )}
             </dl>
           </div>
-
-          {/* Documents */}
-          {documents && documents.length > 0 && (
-            <div className="card">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Documents</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary-500 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-500 uppercase">{doc.document_type}</span>
-                      <span className="text-xs text-gray-400">{getFileExtension(doc.file_name)}</span>
-                    </div>
-                    <p className="text-sm text-gray-900 mb-3 truncate">{doc.file_name}</p>
-                    <div className="flex space-x-2">
-                      {isPDF(doc.file_name) && (
-                        <button onClick={() => handleViewDocument(doc)} className="flex-1 text-xs btn-secondary">
-                          View
-                        </button>
-                      )}
-                      <button onClick={() => handleDownloadDocument(doc)} className="flex-1 text-xs btn-primary">
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Education */}
           {application.educational_backgrounds && application.educational_backgrounds.length > 0 && (

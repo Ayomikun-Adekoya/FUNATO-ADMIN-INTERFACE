@@ -342,15 +342,15 @@ export const useApplicationDocuments = (applicantId: string): UseQueryResult<App
 export const useUpdateApplicationAdmin = (): UseMutationResult<
     Application,
     Error,
-    { id: number; data: UpdateApplicationAdminRequest }
+    { applicantId: string; data: UpdateApplicationAdminRequest }
 > => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }) => applicationsApi.updateAdmin(id, data),
+        mutationFn: ({ applicantId, data }) => applicationsApi.updateAdmin(applicantId, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
-            queryClient.invalidateQueries({ queryKey: ['applications', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['applications', variables.applicantId] });
         },
     });
 };

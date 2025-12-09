@@ -599,9 +599,9 @@ export const applicationsApi = {
     },
 
 // Admin: Update application (can change status)
-updateAdmin: async (id: number, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
+updateAdmin: async (applicantId: string, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
     const { data } = await api.put<ApiResponse<Application>>(
-        `/recruitment/applications/${id}`,
+        `/recruitment/applications/${encodeURIComponent(applicantId)}`,
         applicationData
     );
     return data.data;
@@ -637,14 +637,14 @@ updateAdmin: async (id: number, applicationData: UpdateApplicationAdminRequest):
 
     // Owner: Update own application (cannot change status)
 // TODO: Use X-CSRF-TOKEN for owner updates
-updateOwner: async (id: number, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
+updateOwner: async (applicantId: string, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
     const csrfToken = process.env.CSRF_API_KEY;
     const headers: Record<string, string> = {};
     if (csrfToken) {
         headers['X-CSRF-TOKEN'] = csrfToken;
     }
 
-    const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${id}`, applicationData, {
+    const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${encodeURIComponent(applicantId)}`, applicationData, {
         headers,
     });
     return data.data;

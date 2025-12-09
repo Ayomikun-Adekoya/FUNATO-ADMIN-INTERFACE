@@ -73,7 +73,7 @@ export default function ApplicationsListPage() {
       header: 'Actions',
       render: (app: Application) => (
         <Link
-          href={`/admin/applications/${encodeURIComponent(app.applicant_id)}`} // <-- Updated here
+          href={`/admin/applications/${encodeURIComponent(app.applicant_id || '')}`}
           className="text-primary-600 hover:text-primary-900 text-sm font-medium"
         >
           View Details

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useUpdateScreening } from '@/lib/queries';
+import { useCreateScreening } from '@/lib/queries';
 import { toast } from 'react-toastify';
 import type { Screening } from '@/types/api';
 import { formatDate } from '@/utils/date';
@@ -23,7 +23,7 @@ export default function EditScreeningPage() {
     const [score, setScore] = useState<number | ''>('');
     const [remarks, setRemarks] = useState('');
 
-    const updateScreeningMutation = useUpdateScreening();
+    const createScreeningMutation = useCreateScreening();
 
     // Load screening data from query params
     useEffect(() => {
@@ -48,6 +48,11 @@ export default function EditScreeningPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!screening) {
+            toast.error('Screening data not loaded');
+            return;
+        }
+
         if (!scheduledDate || !venue) {
             toast.error('Scheduled date and venue are required');
             return;
@@ -65,19 +70,18 @@ export default function EditScreeningPage() {
             if (score !== '') screeningData.score = Number(score);
             if (remarks) screeningData.remarks = remarks;
 
-            await updateScreeningMutation.mutateAsync({
-                id: screeningId,
-                data: {
-                    status,
-                    notes,
-                    screening_data: screeningData,
-                },
+            // Create new screening record to maintain history
+            await createScreeningMutation.mutateAsync({
+                admission_application_id: screening.admission_application_id,
+                status,
+                notes,
+                screening_data: screeningData,
             });
-            toast.success('Screening updated successfully!');
+            toast.success('Screening status updated successfully! New record created for audit trail.');
             router.push('/admin/screenings');
         } catch (error: any) {
-            console.error('Update screening error:', error);
-            const errorMessage = error?.response?.data?.message || 'Failed to update screening';
+            console.error('Create screening error:', error);
+            const errorMessage = error?.response?.data?.message || 'Failed to update screening status';
             toast.error(errorMessage);
         }
     };
@@ -97,11 +101,13 @@ export default function EditScreeningPage() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                            <span>Edit Screening</span>
+                            <span>Update Screening Status</span>
                         </div>
 
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Update Screening</h1>
-                        <p className="mt-2 text-gray-600 dark:text-gray-400">Update the screening details for this application</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Update Screening Status</h1>
+                        <p className="mt-2 text-gray-600 dark:text-gray-400">
+                            Create a new screening record with updated status to maintain complete audit history
+                        </p>
                     </div>
 
                     {/* Student Details Card */}
@@ -296,16 +302,16 @@ export default function EditScreeningPage() {
                                     type="button"
                                     onClick={() => router.push('/admin/screenings')}
                                     className="btn-secondary"
-                                    disabled={updateScreeningMutation.isPending}
+                                    disabled={createScreeningMutation.isPending}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     className="btn-primary"
-                                    disabled={updateScreeningMutation.isPending}
+                                    disabled={createScreeningMutation.isPending}
                                 >
-                                    {updateScreeningMutation.isPending ? 'Updating...' : 'Update Screening'}
+                                    {createScreeningMutation.isPending ? 'Creating...' : 'Update Status'}
                                 </button>
                             </div>
                         </form>

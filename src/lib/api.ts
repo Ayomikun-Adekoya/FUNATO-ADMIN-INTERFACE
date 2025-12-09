@@ -395,9 +395,9 @@ export const screeningsApi = {
     },
 
     update: async (id: number, screeningData: UpdateScreeningRequest): Promise<Screening> => {
-        const { data } = await api.put<ApiResponse<Screening>>(
-            `/admin/admission/screenings/${id}`,
-            screeningData
+        const { data } = await api.post<ApiResponse<Screening>>(
+            `/admin/admission/screenings`,
+            { ...screeningData, id }
         );
         return data.data;
     },

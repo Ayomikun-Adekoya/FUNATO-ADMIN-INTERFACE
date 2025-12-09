@@ -24,11 +24,8 @@ export default function LoginPage() {
             setIsLoading(true);
             setError(null);
 
-            console.log('Attempting login with:', data);
-
             // Use authApi.login from api.ts (handles token storage automatically)
             const loginResponse = await authApi.login(data);
-            console.log('Login successful:', loginResponse);
 
             // Fetch and store user data
             const user = await authApi.me();
@@ -40,14 +37,14 @@ export default function LoginPage() {
             // Redirect to admin dashboard
             router.push('/admin');
         } catch (err) {
-            console.error('Login error:', err);
-
-            // Log full error for debugging
-            if (err && typeof err === 'object' && 'response' in err) {
-                const axiosError = err as any;
-                console.error('Response status:', axiosError.response?.status);
-                console.error('Response data:', axiosError.response?.data);
-                console.error('Response headers:', axiosError.response?.headers);
+            // Only log error details in development mode, never log sensitive data
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Login error:', err);
+                if (err && typeof err === 'object' && 'response' in err) {
+                    const axiosError = err as any;
+                    console.error('Response status:', axiosError.response?.status);
+                    // Never log response data as it might contain sensitive information
+                }
             }
 
             // Display specific error message from API

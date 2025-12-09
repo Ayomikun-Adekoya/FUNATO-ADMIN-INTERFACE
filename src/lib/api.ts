@@ -112,7 +112,7 @@ const removeToken = (): void => {
 
 // Create axios instance
 export const api: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.funato.com.ng/api',
     headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -149,13 +149,20 @@ api.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
         if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+            // Never log sensitive data like passwords or tokens
+            const sanitizedResponseData = error.response?.data 
+                ? (typeof error.response.data === 'object' 
+                    ? { ...error.response.data, password: '[REDACTED]', token: '[REDACTED]' }
+                    : error.response.data)
+                : undefined;
+            
             console.error('API Error Details:', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
                 url: error.config?.url,
                 method: error.config?.method,
-                headers: error.config?.headers,
-                responseData: error.response?.data,
+                // Don't log headers as they may contain tokens
+                responseData: sanitizedResponseData,
                 message: error.message,
             });
         }
@@ -387,10 +394,14 @@ export const screeningsApi = {
         return data.data;
     },
 
-    update: async (id: number, screeningData: UpdateScreeningRequest): Promise<Screening> => {
-        const { data } = await api.put<ApiResponse<Screening>>(`/admin/admission/screenings/${id}`, screeningData);
-        return data.data;
-    },
+update: async (id: number, screeningData: UpdateScreeningRequest): Promise<Screening> => {
+    const { data } = await api.put<ApiResponse<Screening>>(
+        `/admin/admission/screenings/${id}`,
+        screeningData
+    );
+    return data.data;
+},
+
 };
 
 // ============================================
@@ -544,7 +555,6 @@ export const modeOfEntriesApi = {
         await api.delete(`/admin/mode-of-entries/${id}`);
     },
 };
-
 // ============================================
 // APPLICATIONS API (Recruitment)
 // ============================================
@@ -552,104 +562,94 @@ export const modeOfEntriesApi = {
 export const applicationsApi = {
     // Admin: Get all applications with filters
     getAll: async (params?: ApplicationQueryParams): Promise<PaginatedResponse<Application>> => {
-        // Filter out empty string values from params to avoid sending them to the API
-        const cleanParams = params ? Object.fromEntries(
-            Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
-        ) : undefined;
+        const cleanParams = params
+            ? Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
+            : undefined;
 
-        const { data } = await api.get<ApiResponse<PaginatedResponse<Application>>>('/recruitment/applications', { params: cleanParams });
+        const { data } = await api.get<ApiResponse<PaginatedResponse<Application>>>(
+            '/recruitment/applications',
+            { params: cleanParams }
+        );
         return data.data;
     },
 
-    // Get single application
-    getById: async (id: number): Promise<Application> => {
-        const { data } = await api.get<ApiResponse<Application>>(`/recruitment/applications/${id}`);
+    // Get single application by applicant_id (string)
+    getByApplicantId: async (applicantId: string): Promise<Application> => {
+        const { data } = await api.get<ApiResponse<Application>>(
+            `/recruitment/applications/${encodeURIComponent(applicantId)}`
+        );
         return data.data;
     },
 
-    // Get application documents
-    getDocuments: async (id: number): Promise<ApplicationDocument[]> => {
-        const { data } = await api.get<ApiResponse<ApplicationDocument[]>>(`/recruitment/applications/${id}/documents`);
+    // Get application documents by applicant_id
+    getDocuments: async (applicantId: string): Promise<ApplicationDocument[]> => {
+        const { data } = await api.get<ApiResponse<ApplicationDocument[]>>(
+            `/recruitment/applications/${encodeURIComponent(applicantId)}/documents`
+        );
         return data.data;
     },
 
-    // Get specific document (returns blob for download/preview)
-    getDocument: async (applicationId: number, documentId: number): Promise<Blob> => {
-        const { data } = await api.get(`/recruitment/applications/${applicationId}/documents/${documentId}`, {
-            responseType: 'blob',
-        });
+    // Get specific document (returns blob for download/preview) by applicant_id
+    getDocument: async (applicantId: string, documentId: number): Promise<Blob> => {
+        const { data } = await api.get(
+            `/recruitment/applications/${encodeURIComponent(applicantId)}/documents/${documentId}`,
+            { responseType: 'blob' }
+        );
         return data;
     },
 
+// Admin: Update application (can change status)
+updateAdmin: async (id: number, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
+    const { data } = await api.put<ApiResponse<Application>>(
+        `/recruitment/applications/${id}`,
+        applicationData
+    );
+    return data.data;
+},
+
+
+    // Admin: Delete application by applicant_id
+    delete: async (applicantId: string): Promise<void> => {
+        await api.delete(`/recruitment/applications/${encodeURIComponent(applicantId)}`);
+    },
+
     // Public: Submit application (multipart/form-data)
-    // TODO: Add X-CSRF-TOKEN header from environment variable for public endpoints
     create: async (applicationData: CreateApplicationRequest): Promise<Application> => {
         const formData = new FormData();
-
-        // Append all text fields
         Object.entries(applicationData).forEach(([key, value]) => {
             if (value !== undefined && value !== null && !(value instanceof File)) {
-                if (Array.isArray(value)) {
-                    formData.append(key, JSON.stringify(value));
-                } else {
-                    formData.append(key, String(value));
-                }
+                formData.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value));
             }
         });
 
-        // Append files if present
-        if (applicationData.passport_photograph) {
-            formData.append('passport_photograph', applicationData.passport_photograph);
-        }
-        if (applicationData.cv) {
-            formData.append('cv', applicationData.cv);
-        }
-        if (applicationData.cover_letter) {
-            formData.append('cover_letter', applicationData.cover_letter);
-        }
-        if (applicationData.birth_certificate) {
-            formData.append('birth_certificate', applicationData.birth_certificate);
-        }
+        if (applicationData.passport_photograph) formData.append('passport_photograph', applicationData.passport_photograph);
+        if (applicationData.cv) formData.append('cv', applicationData.cv);
+        if (applicationData.cover_letter) formData.append('cover_letter', applicationData.cover_letter);
+        if (applicationData.birth_certificate) formData.append('birth_certificate', applicationData.birth_certificate);
 
         const csrfToken = process.env.CSRF_API_KEY;
-        const headers: Record<string, string> = {
-            'Content-Type': 'multipart/form-data',
-        };
-        if (csrfToken) {
-            headers['X-CSRF-TOKEN'] = csrfToken;
-        }
+        const headers: Record<string, string> = { 'Content-Type': 'multipart/form-data' };
+        if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
 
-        const { data } = await api.post<ApiResponse<Application>>('/recruitment/applications', formData, {
-            headers,
-        });
+        const { data } = await api.post<ApiResponse<Application>>('/recruitment/applications', formData, { headers });
         return data.data;
     },
 
     // Owner: Update own application (cannot change status)
-    // TODO: Use X-CSRF-TOKEN for owner updates
-    updateOwner: async (id: number, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
-        const csrfToken = process.env.CSRF_API_KEY;
-        const headers: Record<string, string> = {};
-        if (csrfToken) {
-            headers['X-CSRF-TOKEN'] = csrfToken;
-        }
+// TODO: Use X-CSRF-TOKEN for owner updates
+updateOwner: async (id: number, applicationData: UpdateApplicationOwnerRequest): Promise<Application> => {
+    const csrfToken = process.env.CSRF_API_KEY;
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken;
+    }
 
-        const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${id}`, applicationData, {
-            headers,
-        });
-        return data.data;
-    },
+    const { data } = await api.patch<ApiResponse<Application>>(`/recruitment/applications/${id}`, applicationData, {
+        headers,
+    });
+    return data.data;
+},
 
-    // Admin: Update application (can change status)
-    updateAdmin: async (id: number, applicationData: UpdateApplicationAdminRequest): Promise<Application> => {
-        const { data } = await api.put<ApiResponse<Application>>(`/recruitment/applications/${id}`, applicationData);
-        return data.data;
-    },
-
-    // Admin: Delete application
-    delete: async (id: number): Promise<void> => {
-        await api.delete(`/recruitment/applications/${id}`);
-    },
 };
 
 // ============================================

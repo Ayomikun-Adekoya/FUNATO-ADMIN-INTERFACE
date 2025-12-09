@@ -73,7 +73,7 @@ export default function ApplicationsListPage() {
       header: 'Actions',
       render: (app: Application) => (
         <Link
-          href={`/admin/applications/${encodeURIComponent(app.id)}`}
+          href={`/admin/applications/${encodeURIComponent(app.applicant_id)}`} // <-- Updated here
           className="text-primary-600 hover:text-primary-900 text-sm font-medium"
         >
           View Details
@@ -131,7 +131,6 @@ export default function ApplicationsListPage() {
                 <option value="">All Position Types</option>
                 <option value="Academic">Academic</option>
                 <option value="Non‑Academic">Non‑Academic</option>
-                {/* Adapt based on your position_type values */}
               </select>
             </div>
           </div>

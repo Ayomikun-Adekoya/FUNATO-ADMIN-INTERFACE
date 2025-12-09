@@ -309,10 +309,10 @@ export const usePermissions = (): UseQueryResult<Permission[], Error> => {
         staleTime: 10 * 60 * 1000, // 10 minutes - permissions don't change often
     });
 };
+// ============================================
+// APPLICATION QUERIES (UPDATED FOR applicant_id)
+// ============================================
 
-// ============================================
-// APPLICATION QUERIES
-// ============================================
 
 export const useApplications = (params?: ApplicationQueryParams): UseQueryResult<PaginatedResponse<Application>, Error> => {
     return useQuery({
@@ -321,28 +321,33 @@ export const useApplications = (params?: ApplicationQueryParams): UseQueryResult
     });
 };
 
-export const useApplication = (id: number): UseQueryResult<Application, Error> => {
+// Single application hook using string applicantId
+export const useApplication = (applicantId: string): UseQueryResult<Application, Error> => {
     return useQuery({
-        queryKey: ['applications', id],
-        queryFn: () => applicationsApi.getById(id),
-        enabled: !!id,
+        queryKey: ['applications', applicantId],
+        queryFn: () => applicationsApi.getByApplicantId(applicantId),
+        enabled: !!applicantId,
     });
 };
 
-export const useApplicationDocuments = (id: number): UseQueryResult<ApplicationDocument[], Error> => {
+// Application documents using string applicantId
+export const useApplicationDocuments = (applicantId: string): UseQueryResult<ApplicationDocument[], Error> => {
     return useQuery({
-        queryKey: ['applications', id, 'documents'],
-        queryFn: () => applicationsApi.getDocuments(id),
-        enabled: !!id,
+        queryKey: ['applications', applicantId, 'documents'],
+        queryFn: () => applicationsApi.getDocuments(applicantId),
+        enabled: !!applicantId,
     });
 };
-
-export const useUpdateApplicationAdmin = (): UseMutationResult<Application, Error, { id: number; data: UpdateApplicationAdminRequest }> => {
+// Admin: Update application (can change status)
+export const useUpdateApplicationAdmin = (): UseMutationResult<
+    Application,
+    Error,
+    { id: number; data: UpdateApplicationAdminRequest }
+> => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: UpdateApplicationAdminRequest }) =>
-            applicationsApi.updateAdmin(id, data),
+        mutationFn: ({ id, data }) => applicationsApi.updateAdmin(id, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
             queryClient.invalidateQueries({ queryKey: ['applications', variables.id] });
@@ -350,24 +355,36 @@ export const useUpdateApplicationAdmin = (): UseMutationResult<Application, Erro
     });
 };
 
-export const useUpdateApplicationOwner = (): UseMutationResult<Application, Error, { id: number; data: UpdateApplicationOwnerRequest }> => {
+
+// Owner update (if needed) — can also switch to string ID
+export const useUpdateApplicationOwner = (): UseMutationResult<
+    Application,
+    Error,
+    { applicantId: string; data: UpdateApplicationOwnerRequest }
+> => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: UpdateApplicationOwnerRequest }) =>
-            applicationsApi.updateOwner(id, data),
+        mutationFn: ({ applicantId, data }) => applicationsApi.updateOwner(applicantId, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
-            queryClient.invalidateQueries({ queryKey: ['applications', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['applications', variables.applicantId] });
         },
     });
 };
 
-export const useDeleteApplication = (): UseMutationResult<void, Error, number> => {
+
+
+// Admin: Delete application using string applicantId
+export const useDeleteApplication = (): UseMutationResult<
+    void,
+    Error,
+    string
+> => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (id: number) => applicationsApi.delete(id),
+        mutationFn: (applicantId: string) => applicationsApi.delete(applicantId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
         },

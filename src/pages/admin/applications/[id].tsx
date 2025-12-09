@@ -5,7 +5,9 @@ import { toast } from 'react-toastify';
 import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Modal from '@/components/Modal';
-import PDFViewer from '@/components/PDFViewer';
+import dynamic from 'next/dynamic';
+const PDFViewer = dynamic(() => import('@/components/PDFViewer'), { ssr: false });
+
 import {
   useApplication,
   useApplicationDocuments,
@@ -20,7 +22,9 @@ import type { Application, ApplicationDocument } from '@/types/api';
 export default function ApplicationDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
-  const applicantId = typeof id === 'string' ? parseInt(id, 10) : 0;
+
+  // ✅ Keep the ID as string (applicant_id)
+  const applicantId = typeof id === 'string' ? id : '';
 
   const { data: application, isLoading } = useApplication(applicantId);
   const { data: documents } = useApplicationDocuments(applicantId);
@@ -279,7 +283,7 @@ export default function ApplicationDetailsPage() {
           )}
         </div>
 
-        {/* Modals for status update, delete confirm, document viewer */}
+        {/* Modals */}
         <Modal isOpen={statusModal} onClose={() => setStatusModal(false)} title="Update Application Status">
           <div className="space-y-4">
             <div>

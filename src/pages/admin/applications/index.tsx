@@ -25,6 +25,7 @@ export default function ApplicationsListPage() {
     position_type: positionTypeFilter,
   });
 
+
   const columns = [
     {
       key: 'applicant',

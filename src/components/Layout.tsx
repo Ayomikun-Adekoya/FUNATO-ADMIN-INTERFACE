@@ -99,18 +99,18 @@ export default function Layout({ children }: LayoutProps) {
                 </svg>
             )
         },
-    ];
-
-    const applicationsManagement = [
         {
-            name: 'Recruitment',
-            href: '/admin/applications',
+            name: 'Send Student Emails',
+            href: '/admin/send-student-emails',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12H8m8 0a4 4 0 11-8 0 4 4 0 018 0zm-8 0v4m0-4V8" />
                 </svg>
             )
         },
+    ];
+
+    const applicationsManagement = [
         {
             name: 'Screenings',
             href: '/admin/screenings',
@@ -266,13 +266,29 @@ export default function Layout({ children }: LayoutProps) {
                             </Link>
                         ))}
 
+
+                        {/* Recruitment Top-level Link */}
+                        <div className="pt-6 pb-2">
+                            <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Recruitment
+                            </h3>
+                        </div>
+                        <Link
+                            href="/admin/applications"
+                            className={isActive('/admin/applications') ? 'sidebar-link-active' : 'sidebar-link'}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span>Recruitment</span>
+                        </Link>
+
                         {/* Applications Management Section */}
                         <div className="pt-6 pb-2">
                             <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Applications Management
                             </h3>
                         </div>
-
                         {applicationsManagement.map((item) => (
                             <Link
                                 key={item.name}

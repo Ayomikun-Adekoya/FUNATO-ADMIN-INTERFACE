@@ -13,7 +13,8 @@ interface ProgramFormProps {
 
 export default function ProgramForm({ program, onSubmit, isLoading = false }: ProgramFormProps) {
     const isEditing = !!program;
-    const { data: departmentsData } = useDepartments();
+    // Fetch all departments for dropdown (set per_page high enough)
+    const { data: departmentsData } = useDepartments({ per_page: 100 });
     const [isActive, setIsActive] = useState(program?.is_active ?? true);
 
     const {

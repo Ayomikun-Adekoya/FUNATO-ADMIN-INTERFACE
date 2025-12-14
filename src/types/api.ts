@@ -140,6 +140,7 @@ export interface Application {
     work_experiences?: Experience[];
     references?: Reference[];
     professional_certifications?: Certification[];
+    documents?: ApplicationDocument[];
 }
 
 export interface Education {

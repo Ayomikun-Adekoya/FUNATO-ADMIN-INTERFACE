@@ -250,10 +250,10 @@ export default function ApplicationDetailsPage() {
     }
 
     // Documents
-    if (documents && documents.length > 0) {
+    if (application.documents && application.documents.length > 0) {
       doc.text('Documents', 10, y);
       y += 6;
-      const docRows = documents.map((d: ApplicationDocument) => [
+      const docRows = application.documents.map((d: ApplicationDocument) => [
         d.document_type || '',
         d.file_name || ''
       ]);

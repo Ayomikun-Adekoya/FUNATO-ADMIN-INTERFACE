@@ -70,6 +70,13 @@ export default function ApplicationsListPage() {
       ),
     },
     {
+      key: 'id',
+      header: 'Application ID',
+      render: (app: Application) => (
+        <span className="text-sm text-gray-900">{app.applicant_id}</span>
+      ),
+    },
+    {
       key: 'actions',
       header: 'Actions',
       render: (app: Application) => (
@@ -99,7 +106,7 @@ export default function ApplicationsListPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by Name or Email..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);

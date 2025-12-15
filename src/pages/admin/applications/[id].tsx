@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Modal from '@/components/Modal';
 import dynamic from 'next/dynamic';
 const PDFViewer = dynamic(() => import('@/components/PDFViewer'), { ssr: false });
+import Image from 'next/image';
 
 import {
   useApplication,
@@ -21,7 +22,14 @@ import { formatDate } from '@/utils/date';
 import { getStatusColor, downloadBlob, isPDF, isImage } from '@/utils/format';
 import type { ApplicationDocument } from '@/types/api';
 
-import type { Education, Experience, Reference, Certification } from '@/types/api';
+// Extend jsPDF to include lastAutoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 export default function ApplicationDetailsPage() {
   const router = useRouter();
@@ -75,16 +83,6 @@ export default function ApplicationDetailsPage() {
       } else {
         toast.error('Failed to delete application');
       }
-    }
-  };
-
-  const handleViewDocument = async (doc: ApplicationDocument) => {
-    try {
-      const blob = await applicationsApi.getDocument(applicantId, doc.id);
-      setDocumentModal({ open: true, document: doc, blob });
-    } catch (error) {
-      console.error('Document fetch error:', error);
-      toast.error('Failed to load document');
     }
   };
 
@@ -157,7 +155,6 @@ export default function ApplicationDetailsPage() {
       ['Residential Address', application.residential_address],
     ];
     autoTable(doc, { head: [['Field', 'Value']], body: personalRows, startY: y, styles: { fontSize: 9 } });
-    // @ts-expect-error: lastAutoTable is a jsPDF plugin property
     y = doc.lastAutoTable.finalY + 6;
 
     // Position Info
@@ -171,95 +168,140 @@ export default function ApplicationDetailsPage() {
       ['Status', application.status || 'pending'],
     ];
     autoTable(doc, { head: [['Field', 'Value']], body: positionRows, startY: y, styles: { fontSize: 9 } });
-    // @ts-expect-error: lastAutoTable is a jsPDF plugin property
     y = doc.lastAutoTable.finalY + 6;
 
     // Education
-    if (application.educational_backgrounds && application.educational_backgrounds.length > 0) {
-      doc.text('Education', 10, y);
-      y += 6;
-      const eduRows = application.educational_backgrounds.map((e: Education) => [
-        e.institution_name || '',
-        e.degree_type || '',
-        e.field_of_study || '',
-        e.start_date ? formatDateOnly(e.start_date) : '',
-        e.end_date ? formatDateOnly(e.end_date) : '',
-        e.grade || '',
-        e.certificate || ''
-      ]);
-      autoTable(doc, {
-        head: [['Institution', 'Degree Type', 'Field of Study', 'Start Date', 'End Date', 'Grade', 'Certificate']],
-        body: eduRows,
-        startY: y,
-        styles: { fontSize: 9 }
-      });
-      // @ts-expect-error: lastAutoTable is a jsPDF plugin property
-      y = doc.lastAutoTable?.finalY + 6 || y + 6;
-    }
+    doc.text('Education', 10, y);
+    y += 6;
+    // Remove file paths and document paths from the PDF generation
+    const educationRows = application.educational_backgrounds?.map((edu) => [
+      edu.institution_name || 'null',
+      edu.certificate_obtained || 'null',
+      edu.class_of_degree || 'null',
+      edu.year_attained || 'null',
+    ]) || [];
+    autoTable(doc, {
+      head: [['Institution', 'Certificate Obtained', 'Class of Degree', 'Year Attained']],
+      body: educationRows,
+      startY: y,
+      styles: { fontSize: 9 },
+    });
+    y = doc.lastAutoTable.finalY + 6;
 
     // Work Experience
-    if (application.work_experiences && application.work_experiences.length > 0) {
-      doc.text('Work Experience', 10, y);
-      y += 6;
-      const workRows = application.work_experiences.map((w: Experience) => [
-        w.company_name || '',
-        w.job_title || '',
-        `${formatDateOnly(w.start_date) || ''} - ${w.end_date ? formatDateOnly(w.end_date) : (w.is_current ? 'Present' : '')}`,
-        w.responsibilities || ''
-      ]);
+    doc.text('Work Experience', 10, y);
+    y += 6;
+    const workRows = application.work_experiences?.map((exp) => [
+      exp.job_title || 'null',
+      exp.organization_name || 'null',
+      exp.start_date || 'null',
+      exp.end_date || 'null',
+      exp.responsibilities || 'null',
+    ]) || [];
+    if (workRows.length > 0) {
       autoTable(doc, {
-        head: [['Company', 'Job Title', 'Period', 'Responsibilities']],
+        head: [['Job Title', 'Organization Name', 'Start Date', 'End Date', 'Responsibility']],
         body: workRows,
         startY: y,
-        styles: { fontSize: 9 }
+        styles: { fontSize: 9 },
       });
-      // @ts-expect-error: lastAutoTable is a jsPDF plugin property
-      y = doc.lastAutoTable?.finalY + 6 || y + 6;
+      y = doc.lastAutoTable.finalY + 6;
+    } else {
+      autoTable(doc, { head: [['No work experience records']], body: [], startY: y, styles: { fontSize: 9 } });
+      y = doc.lastAutoTable.finalY + 6;
     }
 
     // References
-    if (application.references && application.references.length > 0) {
-      doc.text('References', 10, y);
-      y += 6;
-      const refRows = application.references.map((r: Reference) => [
-        r.name || '',
-        r.position || '',
-        r.company_organization || '',
-        r.relationship || '',
-        r.email || '',
-        r.phone || ''
-      ]);
-      autoTable(doc, { head: [['Name', 'Position', 'Company', 'Relationship', 'Email', 'Phone']], body: refRows, startY: y, styles: { fontSize: 9 } });
-      // @ts-expect-error: lastAutoTable is a jsPDF plugin property
-      y = doc.lastAutoTable?.finalY + 6 || y + 6;
+    doc.text('References', 10, y);
+    y += 6;
+    const referenceRows = application.references?.map((ref) => [
+      ref.full_name || 'null',
+      ref.professional_email || 'null',
+      ref.relationship || 'null',
+    ]) || [];
+    if (referenceRows.length > 0) {
+      application.references?.forEach((ref, idx) => {
+        const refRows = [
+          ['Full Name', ref.full_name || 'null'],
+          ['Email', ref.professional_email || 'null'],
+          ['Job Title', ref.job_title || 'null'],
+          ['Institution', ref.referee_institution || 'null'],
+          ['Relationship', ref.relationship || 'null'],
+          ['Phone', ref.phone || 'null'],
+          ['Contact Address', ref.contact_address || 'null'],
+          ['How Long Known', ref.how_long_known || 'null'],
+          ['Assessment', ref.assessment || 'null'],
+          ['Professional Competence', ref.professional_competence || 'null'],
+          ['Reliability & Integrity', ref.reliability_integrity || 'null'],
+          ['Communication Skills', ref.communication_skills || 'null'],
+          ['Applicant Strength', ref.applicant_strength || 'null'],
+          ['Recommendation', ref.recommendation || 'null'],
+          ['Optional Letter', ref.optional_letter || 'null'],
+          ['Submitted At', ref.submitted_at ? formatDateOnly(ref.submitted_at) : 'null'],
+        ];
+        autoTable(doc, {
+          head: [['Field', 'Value']],
+          body: refRows,
+          startY: y,
+          styles: { fontSize: 9 },
+          margin: { left: 14 },
+        });
+        y = doc.lastAutoTable.finalY + 4;
+        if (application.references && idx < application.references.length - 1) {
+          doc.setDrawColor(200);
+          doc.line(12, y - 2, 190, y - 2); // separator line
+          y += 2;
+        }
+      });
+    } else {
+      autoTable(doc, { head: [['No references']], body: [], startY: y, styles: { fontSize: 9 } });
+      y = doc.lastAutoTable.finalY + 6;
     }
 
     // Certifications
+    doc.text('Professional Certifications', 10, y);
+    y += 6;
     if (application.professional_certifications && application.professional_certifications.length > 0) {
-      doc.text('Certifications', 10, y);
-      y += 6;
-      const certRows = application.professional_certifications.map((c: Certification) => [
-        c.certification_name || '',
-        c.issuing_organization || '',
-        c.issue_date ? formatDateOnly(c.issue_date) : '',
-        c.expiry_date ? formatDateOnly(c.expiry_date) : '',
+      const certRows = application.professional_certifications.map((cert) => [
+        cert.certification_name || 'null',
+        cert.issuing_organization || 'null',
+        cert.issue_date || 'null',
+        cert.expiry_date || 'null',
       ]);
-      autoTable(doc, { head: [['Certification', 'Issuer', 'Issue Date', 'Expiry Date']], body: certRows, startY: y, styles: { fontSize: 9 } });
-      // @ts-expect-error: lastAutoTable is a jsPDF plugin property
-      y = doc.lastAutoTable?.finalY + 6 || y + 6;
+      autoTable(doc, {
+        head: [['Certification', 'Issuer', 'Issue Date', 'Expiry Date']],
+        body: certRows,
+        startY: y,
+        styles: { fontSize: 9 },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    } else {
+      autoTable(doc, { head: [['No certifications']], body: [], startY: y, styles: { fontSize: 9 } });
+      y = doc.lastAutoTable.finalY + 6;
     }
 
     // Documents
+    doc.text('Documents', 10, y);
+    y += 6;
     if (application.documents && application.documents.length > 0) {
-      doc.text('Documents', 10, y);
-      y += 6;
-      const docRows = application.documents.map((d: ApplicationDocument) => [
-        d.document_type || '',
-        d.file_name || ''
+      const docRows = application.documents.map((d) => [
+        d.file_name || 'null',
+        d.document_type || 'null',
+        d.file_path || 'null',
+        d.mime_type || 'null',
+        d.file_size ? `${(parseInt(d.file_size) / 1024).toFixed(2)} KB` : 'null',
       ]);
-      autoTable(doc, { head: [['Type', 'File Name']], body: docRows, startY: y, styles: { fontSize: 9 } });
-      // @ts-expect-error: lastAutoTable is a jsPDF plugin property
-      y = doc.lastAutoTable?.finalY + 6 || y + 6;
+      autoTable(doc, {
+        head: [['File Name', 'Document Type', 'File Path', 'MIME Type', 'File Size']],
+        body: docRows,
+        startY: y,
+        styles: { fontSize: 7 },
+        columnStyles: { 2: { cellWidth: 60 } },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    } else {
+      autoTable(doc, { head: [['No documents']], body: [], startY: y, styles: { fontSize: 9 } });
+      y = doc.lastAutoTable.finalY + 6;
     }
 
     doc.save(`application_${application.applicant_id}.pdf`);
@@ -369,19 +411,22 @@ export default function ApplicationDetailsPage() {
           {application.educational_backgrounds && application.educational_backgrounds.length > 0 ? (
             <div className="space-y-4">
               {application.educational_backgrounds.map((edu, index) => (
-                <div key={index} className="border-l-4 border-primary-500 pl-4">
-                  <h3 className="font-medium text-gray-900">{edu.institution_name || 'null'}</h3>
-                  <p className="text-sm text-gray-600">Degree Type: {edu.degree_type || 'null'}</p>
-                  <p className="text-sm text-gray-600">Field of Study: {edu.field_of_study || 'null'}</p>
-                  <p className="text-sm text-gray-500">
-                    {edu.start_date ? formatDate(edu.start_date) : 'null'} - {edu.end_date ? formatDate(edu.end_date) : (edu.start_date ? 'Present' : 'null')}
-                  </p>
-                  <p className="text-sm text-gray-600">Grade: {edu.grade || 'null'}</p>
-                  <p className="text-xs">
-                    {edu.certificate ? (
-                      <a href={edu.certificate} target="_blank" rel="noopener noreferrer" className="text-primary-600 underline">View Certificate</a>
-                    ) : 'null'}
-                  </p>
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-medium text-gray-900 mb-3">{edu.institution_name || 'null'}</h3>
+                  <div className="space-y-1.5">
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Certificate Obtained:</span>{' '}
+                      <span className="text-gray-600">{edu.certificate_obtained || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Class of Degree:</span>{' '}
+                      <span className="text-gray-600">{edu.class_of_degree || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Year Attained:</span>{' '}
+                      <span className="text-gray-600">{edu.year_attained || 'null'}</span>
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -396,13 +441,26 @@ export default function ApplicationDetailsPage() {
           {application.work_experiences && application.work_experiences.length > 0 ? (
             <div className="space-y-4">
               {application.work_experiences.map((exp, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4">
-                  <h3 className="font-medium text-gray-900">{exp.job_title || 'null'}</h3>
-                  <p className="text-sm text-gray-600">{exp.company_name || 'null'}</p>
-                  <p className="text-sm text-gray-500">
-                    {exp.start_date ? formatDate(exp.start_date) : 'null'} — {exp.is_current ? 'Present' : exp.end_date ? formatDate(exp.end_date) : 'null'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">{exp.responsibilities || 'null'}</p>
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-medium text-gray-900 mb-3">{exp.job_title || 'null'}</h3>
+                  <div className="space-y-1.5">
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Organization Name:</span>{' '}
+                      <span className="text-gray-600">{exp.organization_name || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Start Date:</span>{' '}
+                      <span className="text-gray-600">{exp.start_date ? formatDate(exp.start_date) : 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">End Date:</span>{' '}
+                      <span className="text-gray-600">{exp.end_date ? formatDate(exp.end_date) : 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Responsibility:</span>{' '}
+                      <span className="text-gray-600">{exp.responsibilities || 'null'}</span>
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -418,13 +476,81 @@ export default function ApplicationDetailsPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {application.references.map((ref, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900">{ref.name || 'null'}</h3>
-                  <p className="text-sm text-gray-600">
-                    {(ref.position || 'null')} at {(ref.company_organization || 'null')}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">Relationship: {ref.relationship || 'null'}</p>
-                  <p className="text-sm text-gray-500">Email: {ref.email || 'null'}</p>
-                  <p className="text-sm text-gray-500">Phone: {ref.phone || 'null'}</p>
+                  <h3 className="font-medium text-gray-900 mb-3">{ref.full_name || 'null'}</h3>
+                  <div className="space-y-1.5">
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Referee Name:</span>{' '}
+                      <span className="text-gray-600">{ref.referee_name || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Email:</span>{' '}
+                      <span className="text-gray-600">{ref.professional_email || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Professional Email:</span>{' '}
+                      <span className="text-gray-600">{ref.professional_email || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Job Title:</span>{' '}
+                      <span className="text-gray-600">{ref.job_title || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Institution:</span>{' '}
+                      <span className="text-gray-600">{ref.referee_institution || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Relationship:</span>{' '}
+                      <span className="text-gray-600">{ref.relationship || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Phone:</span>{' '}
+                      <span className="text-gray-600">{ref.phone || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Contact Address:</span>{' '}
+                      <span className="text-gray-600">{ref.contact_address || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">How Long Known:</span>{' '}
+                      <span className="text-gray-600">{ref.how_long_known || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Assessment:</span>{' '}
+                      <span className="text-gray-600">{ref.assessment || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Professional Competence:</span>{' '}
+                      <span className="text-gray-600">{ref.professional_competence || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Reliability & Integrity:</span>{' '}
+                      <span className="text-gray-600">{ref.reliability_integrity || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Communication Skills:</span>{' '}
+                      <span className="text-gray-600">{ref.communication_skills || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Applicant Strength:</span>{' '}
+                      <span className="text-gray-600">{ref.applicant_strength || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Recommendation:</span>{' '}
+                      <span className="text-gray-600">{ref.recommendation || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Optional Letter:</span>{' '}
+                      <span className="text-gray-600">{ref.optional_letter || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Confidentiality Consent:</span>{' '}
+                      {/* confidentiality_consent does not exist on Reference, so this is removed */}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Submitted At:</span>{' '}
+                      <span className="text-gray-600">{ref.submitted_at ? formatDate(ref.submitted_at) : 'null'}</span>
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -445,6 +571,48 @@ export default function ApplicationDetailsPage() {
                   <p className="text-sm text-gray-500">
                     Issued: {cert.issue_date || 'null'} {cert.expiry_date ? `| Expires: ${cert.expiry_date}` : '| Expires: null'}
                   </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-gray-500">null</div>
+          )}
+        </div>
+
+        {/* Documents */}
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Documents</h2>
+          {application.documents && application.documents.length > 0 ? (
+            <div className="space-y-4">
+              {application.documents.map((doc, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-medium text-gray-900 mb-3">{doc.file_name || 'null'}</h3>
+                  <div className="space-y-1.5">
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Document Type:</span>{' '}
+                      <span className="text-gray-600">{doc.document_type || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">File Path:</span>{' '}
+                      <span className="text-gray-600 break-all">{doc.file_path || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">MIME Type:</span>{' '}
+                      <span className="text-gray-600">{doc.mime_type || 'null'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">File Size:</span>{' '}
+                      <span className="text-gray-600">{doc.file_size ? `${(parseInt(doc.file_size) / 1024).toFixed(2)} KB` : 'null'}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleDownloadDocument(doc)}
+                      className="btn-primary text-xs py-1 px-3"
+                    >
+                      Download
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -522,7 +690,14 @@ export default function ApplicationDetailsPage() {
                 const url = URL.createObjectURL(documentModal.blob);
                 return (
                   <div className="flex justify-center items-center min-h-[400px]">
-                    <img src={url} alt={fileName} className="max-h-[80vh] max-w-full rounded shadow" onLoad={() => URL.revokeObjectURL(url)} />
+                    <Image
+                      src={url}
+                      alt={fileName}
+                      className="max-h-[80vh] max-w-full rounded shadow"
+                      onLoad={() => URL.revokeObjectURL(url)}
+                      width={500} // Example width
+                      height={500} // Example height
+                    />
                   </div>
                 );
               } else {
@@ -532,6 +707,6 @@ export default function ApplicationDetailsPage() {
           )}
         </Modal>
       </Layout>
-    </ProtectedRoute>
+      </ProtectedRoute >
   );
 }

@@ -146,34 +146,40 @@ export interface Application {
 export interface Education {
     id?: number;
     institution_name: string;
-    degree_type: string;
-    field_of_study: string;
-    start_date: string;
-    end_date?: string | null;
-    grade?: string | null;
-    certificate?: string | null; // file path or URL
+    certificate_obtained?: string | null;
+    class_of_degree?: string | null;
+    year_attained?: string | null;
+    document_path?: string | null;
 }
 
 export interface Experience {
     id?: number;
-    company_name: string;
+    organization_name: string;
     job_title: string;
     start_date: string;
     end_date?: string | null;
-    is_current?: boolean;
     responsibilities?: string | null;
-    reference_letter?: string | null; // file path or URL
 }
 
 export interface Reference {
     id?: number;
-    name: string;
+    full_name: string;
+    referee_name?: string | null;
+    professional_email?: string | null;
+    job_title?: string | null;
+    referee_institution?: string | null;
     relationship: string;
-    company_organization: string;
-    position: string;
-    email: string;
     phone: string;
-    reference_letter?: string | null; // file path or URL
+    contact_address?: string | null;
+    how_long_known?: string | null;
+    assessment?: string | null;
+    professional_competence?: string | null;
+    reliability_integrity?: string | null;
+    communication_skills?: string | null;
+    applicant_strength?: string | null;
+    recommendation?: string | null;
+    optional_letter?: string | null;
+    submitted_at?: string | null;
 }
 
 export interface Certification {
@@ -193,6 +199,7 @@ export interface ApplicationDocument {
     file_path: string;
     mime_type: string;
     size: number;
+    file_size?: string | null;
     created_at: string;
     updated_at: string;
 }

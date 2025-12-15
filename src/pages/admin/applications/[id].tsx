@@ -194,8 +194,8 @@ export default function ApplicationDetailsPage() {
     const workRows = application.work_experiences?.map((exp) => [
       exp.job_title || 'null',
       exp.organization_name || 'null',
-      exp.start_date || 'null',
-      exp.end_date || 'null',
+      exp.start_date ? formatDateOnly(exp.start_date) : 'null',
+      exp.end_date ? formatDateOnly(exp.end_date) : 'null',
       exp.responsibilities || 'null',
     ]) || [];
     if (workRows.length > 0) {
@@ -265,8 +265,8 @@ export default function ApplicationDetailsPage() {
       const certRows = application.professional_certifications.map((cert) => [
         cert.certification_name || 'null',
         cert.issuing_organization || 'null',
-        cert.issue_date || 'null',
-        cert.expiry_date || 'null',
+        cert.issue_date ? formatDateOnly(cert.issue_date) : 'null',
+        cert.expiry_date ? formatDateOnly(cert.expiry_date) : 'null',
       ]);
       autoTable(doc, {
         head: [['Certification', 'Issuer', 'Issue Date', 'Expiry Date']],
@@ -287,12 +287,9 @@ export default function ApplicationDetailsPage() {
       const docRows = application.documents.map((d) => [
         d.file_name || 'null',
         d.document_type || 'null',
-        d.file_path || 'null',
-        d.mime_type || 'null',
-        d.file_size ? `${(parseInt(d.file_size) / 1024).toFixed(2)} KB` : 'null',
       ]);
       autoTable(doc, {
-        head: [['File Name', 'Document Type', 'File Path', 'MIME Type', 'File Size']],
+        head: [['File Name', 'Document Type']],
         body: docRows,
         startY: y,
         styles: { fontSize: 7 },

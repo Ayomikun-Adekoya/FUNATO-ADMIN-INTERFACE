@@ -707,6 +707,6 @@ export default function ApplicationDetailsPage() {
           )}
         </Modal>
       </Layout>
-      </ProtectedRoute >
+    </ProtectedRoute >
   );
 }

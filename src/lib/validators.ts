@@ -84,7 +84,7 @@ export const experienceSchema = z.object({
     start_date: z.string().min(1, 'Start date is required'),
     end_date: z.string().optional().nullable(),
     is_current: z.boolean().optional(),
-    responsibilities: z.string().optional().nullable(),
+    responsibility: z.string().optional().nullable(),
     reference_letter: z.string().optional().nullable(),
 });
 
@@ -97,7 +97,9 @@ export const referenceSchema = z.object({
     company_organization: z.string().min(1, 'Company/Organization is required'),
     position: z.string().min(1, 'Position is required'),
     email: z.string().email('Invalid email address'),
+    professional_email: z.string().email('Invalid email address'),
     phone: z.string().min(1, 'Phone is required'),
+    confidentiality_consent: z.boolean().optional(),
     reference_letter: z.string().optional().nullable(),
 });
 
@@ -106,9 +108,8 @@ export type ReferenceFormData = z.infer<typeof referenceSchema>;
 export const certificationSchema = z.object({
     id: z.number().optional(),
     certification_name: z.string().min(1, 'Certification name is required'),
-    issuing_organization: z.string().min(1, 'Issuing organization is required'),
-    issue_date: z.string().min(1, 'Issue date is required'),
-    expiry_date: z.string().optional().nullable(),
+    certificate_title: z.string().min(1, 'Certificate title is required'),
+    issuing_body: z.string().min(1, 'Issuing body is required'),
     certificate: z.string().optional().nullable(),
 });
 

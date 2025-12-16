@@ -21,6 +21,7 @@ import { applicationsApi } from '@/lib/api';
 import { formatDate } from '@/utils/date';
 import { getStatusColor, downloadBlob, isPDF, isImage } from '@/utils/format';
 import type { ApplicationDocument } from '@/types/api';
+import { boolean } from 'zod';
 
 // Extend jsPDF to include lastAutoTable
 declare module 'jspdf' {
@@ -163,8 +164,6 @@ export default function ApplicationDetailsPage() {
     const positionRows = [
       ['Position Applied For', application.position_applied_for],
       ['Position Type', application.position_type],
-      ['Preferred Start Date', application.preferred_start_date ? formatDateOnly(application.preferred_start_date) : 'N/A'],
-      ['How Did You Hear', application.how_did_you_hear || 'N/A'],
       ['Status', application.status || 'pending'],
     ];
     autoTable(doc, { head: [['Field', 'Value']], body: positionRows, startY: y, styles: { fontSize: 9 } });
@@ -194,13 +193,11 @@ export default function ApplicationDetailsPage() {
     const workRows = application.work_experiences?.map((exp) => [
       exp.job_title || 'null',
       exp.organization_name || 'null',
-      exp.start_date ? formatDateOnly(exp.start_date) : 'null',
-      exp.end_date ? formatDateOnly(exp.end_date) : 'null',
-      exp.responsibilities || 'null',
+      exp.responsibility || 'null',
     ]) || [];
     if (workRows.length > 0) {
       autoTable(doc, {
-        head: [['Job Title', 'Organization Name', 'Start Date', 'End Date', 'Responsibility']],
+        head: [['Job Title', 'Organization Name',  'Responsibility']],
         body: workRows,
         startY: y,
         styles: { fontSize: 9 },
@@ -223,7 +220,8 @@ export default function ApplicationDetailsPage() {
       application.references?.forEach((ref, idx) => {
         const refRows = [
           ['Full Name', ref.full_name || 'null'],
-          ['Email', ref.professional_email || 'null'],
+          ['Email', ref.email || 'null'],
+          ['Professional Email', ref.professional_email || 'null'],
           ['Job Title', ref.job_title || 'null'],
           ['Institution', ref.referee_institution || 'null'],
           ['Relationship', ref.relationship || 'null'],
@@ -264,12 +262,11 @@ export default function ApplicationDetailsPage() {
     if (application.professional_certifications && application.professional_certifications.length > 0) {
       const certRows = application.professional_certifications.map((cert) => [
         cert.certification_name || 'null',
-        cert.issuing_organization || 'null',
-        cert.issue_date ? formatDateOnly(cert.issue_date) : 'null',
-        cert.expiry_date ? formatDateOnly(cert.expiry_date) : 'null',
+        cert.certificate_title || 'null',
+        cert.issuing_body || 'null',
       ]);
       autoTable(doc, {
-        head: [['Certification', 'Issuer', 'Issue Date', 'Expiry Date']],
+        head: [['Certification', 'Issuing Body','Certificate Title']],
         body: certRows,
         startY: y,
         styles: { fontSize: 9 },
@@ -387,18 +384,7 @@ export default function ApplicationDetailsPage() {
               <dt className="text-sm font-medium text-gray-500">Position Type</dt>
               <dd className="mt-1 text-sm text-gray-900">{application.position_type}</dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Preferred Start Date</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {application.preferred_start_date ? formatDate(application.preferred_start_date) : 'N/A'}
-              </dd>
-            </div>
-            {application.how_did_you_hear && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">How Did You Hear</dt>
-                <dd className="mt-1 text-sm text-gray-900">{application.how_did_you_hear}</dd>
-              </div>
-            )}
+            
           </dl>
         </div>
 
@@ -445,17 +431,10 @@ export default function ApplicationDetailsPage() {
                       <span className="font-medium text-gray-700">Organization Name:</span>{' '}
                       <span className="text-gray-600">{exp.organization_name || 'null'}</span>
                     </p>
-                    <p className="text-sm">
-                      <span className="font-medium text-gray-700">Start Date:</span>{' '}
-                      <span className="text-gray-600">{exp.start_date ? formatDate(exp.start_date) : 'null'}</span>
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium text-gray-700">End Date:</span>{' '}
-                      <span className="text-gray-600">{exp.end_date ? formatDate(exp.end_date) : 'null'}</span>
-                    </p>
+                
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Responsibility:</span>{' '}
-                      <span className="text-gray-600">{exp.responsibilities || 'null'}</span>
+                      <span className="text-gray-600">{exp.responsibility || 'null'}</span>
                     </p>
                   </div>
                 </div>
@@ -481,7 +460,7 @@ export default function ApplicationDetailsPage() {
                     </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Email:</span>{' '}
-                      <span className="text-gray-600">{ref.professional_email || 'null'}</span>
+                      <span className="text-gray-600">{ref.email || 'null'}</span>
                     </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Professional Email:</span>{' '}
@@ -541,8 +520,12 @@ export default function ApplicationDetailsPage() {
                     </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Confidentiality Consent:</span>{' '}
-                      {/* confidentiality_consent does not exist on Reference, so this is removed */}
-                    </p>
+                      <span className="text-gray-600">
+                        {ref.confidentiality_consent !== null && ref.confidentiality_consent !== undefined
+                          ? ref.confidentiality_consent ? 'Yes' : 'No'
+                          : 'null'}
+                      </span>                    
+                      </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Submitted At:</span>{' '}
                       <span className="text-gray-600">{ref.submitted_at ? formatDate(ref.submitted_at) : 'null'}</span>
@@ -564,9 +547,9 @@ export default function ApplicationDetailsPage() {
               {application.professional_certifications.map((cert, index) => (
                 <div key={index} className="border-l-4 border-blue-500 pl-4">
                   <h3 className="font-medium text-gray-900">{cert.certification_name || 'null'}</h3>
-                  <p className="text-sm text-gray-600">{cert.issuing_organization || 'null'}</p>
+                  <p className="text-sm text-gray-600">{cert.certificate_title || 'null'}</p>
                   <p className="text-sm text-gray-500">
-                    Issued: {cert.issue_date || 'null'} {cert.expiry_date ? `| Expires: ${cert.expiry_date}` : '| Expires: null'}
+                    Issuing Body: {cert.issuing_body || 'null'}
                   </p>
                 </div>
               ))}

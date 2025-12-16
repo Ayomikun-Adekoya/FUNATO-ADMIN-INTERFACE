@@ -158,13 +158,14 @@ export interface Experience {
     job_title: string;
     start_date: string;
     end_date?: string | null;
-    responsibilities?: string | null;
+    responsibility?: string | null;
 }
 
 export interface Reference {
     id?: number;
     full_name: string;
     referee_name?: string | null;
+    email?: string | null;
     professional_email?: string | null;
     job_title?: string | null;
     referee_institution?: string | null;
@@ -177,6 +178,7 @@ export interface Reference {
     reliability_integrity?: string | null;
     communication_skills?: string | null;
     applicant_strength?: string | null;
+    confidentiality_consent?: boolean | null;
     recommendation?: string | null;
     optional_letter?: string | null;
     submitted_at?: string | null;
@@ -186,8 +188,8 @@ export interface Certification {
     id?: number;
     certification_name: string;
     issuing_organization: string;
-    issue_date: string;
-    expiry_date?: string | null;
+    issuing_body:string;
+   certificate_title: string;
     certificate?: string | null; // file path or URL
 }
 

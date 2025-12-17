@@ -191,6 +191,8 @@ export interface Certification {
     issuing_body: string;
     certificate_title: string;
     certificate?: string | null; // file path or URL
+    date_obtained?: string | null;
+    expiry_date?: string | null;
 }
 
 export interface ApplicationDocument {

@@ -21,7 +21,7 @@ import { applicationsApi } from '@/lib/api';
 import { formatDate } from '@/utils/date';
 import { getStatusColor, downloadBlob, isPDF, isImage } from '@/utils/format';
 import type { ApplicationDocument } from '@/types/api';
-import { boolean } from 'zod';
+// import { boolean } from 'zod';
 
 // Extend jsPDF to include lastAutoTable
 declare module 'jspdf' {

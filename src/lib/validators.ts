@@ -109,6 +109,8 @@ export const certificationSchema = z.object({
     certificate_title: z.string().min(1, 'Certificate title is required'),
     issuing_body: z.string().min(1, 'Issuing body is required'),
     certificate: z.string().optional().nullable(),
+    date_obtained: z.string().optional().nullable(),
+    expiry_date: z.string().optional().nullable(),
 });
 
 export type CertificationFormData = z.infer<typeof certificationSchema>;

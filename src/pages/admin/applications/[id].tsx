@@ -193,11 +193,13 @@ export default function ApplicationDetailsPage() {
     const workRows = application.work_experiences?.map((exp) => [
       exp.job_title || 'null',
       exp.organization_name || 'null',
+      exp.start_date ? formatDateOnly(exp.start_date) : 'N/A',
+      exp.end_date ? formatDateOnly(exp.end_date) : 'N/A',
       exp.responsibility || 'null',
     ]) || [];
     if (workRows.length > 0) {
       autoTable(doc, {
-        head: [['Job Title', 'Organization Name',  'Responsibility']],
+        head: [['Job Title', 'Organization Name', 'Start Date', 'End Date', 'Responsibility']],
         body: workRows,
         startY: y,
         styles: { fontSize: 9 },
@@ -228,7 +230,7 @@ export default function ApplicationDetailsPage() {
           ['Phone', ref.phone || 'null'],
           ['Contact Address', ref.contact_address || 'null'],
           ['How Long Known', ref.how_long_known || 'null'],
-          ['Assessment', ref.assessment || 'null'],
+          // Assessment removed
           ['Professional Competence', ref.professional_competence || 'null'],
           ['Reliability & Integrity', ref.reliability_integrity || 'null'],
           ['Communication Skills', ref.communication_skills || 'null'],
@@ -264,9 +266,11 @@ export default function ApplicationDetailsPage() {
         cert.certification_name || 'null',
         cert.certificate_title || 'null',
         cert.issuing_body || 'null',
+        cert.date_obtained ? formatDateOnly(cert.date_obtained) : 'N/A',
+        cert.expiry_date ? formatDateOnly(cert.expiry_date) : 'N/A',
       ]);
       autoTable(doc, {
-        head: [['Certification', 'Issuing Body','Certificate Title']],
+        head: [['Certification', 'Issuing Body', 'Certificate Title', 'Date Obtained', 'Expiry Date']],
         body: certRows,
         startY: y,
         styles: { fontSize: 9 },
@@ -384,7 +388,7 @@ export default function ApplicationDetailsPage() {
               <dt className="text-sm font-medium text-gray-500">Position Type</dt>
               <dd className="mt-1 text-sm text-gray-900">{application.position_type}</dd>
             </div>
-            
+
           </dl>
         </div>
 
@@ -431,7 +435,14 @@ export default function ApplicationDetailsPage() {
                       <span className="font-medium text-gray-700">Organization Name:</span>{' '}
                       <span className="text-gray-600">{exp.organization_name || 'null'}</span>
                     </p>
-                
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">Start Date:</span>{' '}
+                      <span className="text-gray-600">{exp.start_date ? formatDate(exp.start_date) : 'N/A'}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium text-gray-700">End Date:</span>{' '}
+                      <span className="text-gray-600">{exp.end_date ? formatDate(exp.end_date) : 'N/A'}</span>
+                    </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Responsibility:</span>{' '}
                       <span className="text-gray-600">{exp.responsibility || 'null'}</span>
@@ -490,10 +501,7 @@ export default function ApplicationDetailsPage() {
                       <span className="font-medium text-gray-700">How Long Known:</span>{' '}
                       <span className="text-gray-600">{ref.how_long_known || 'null'}</span>
                     </p>
-                    <p className="text-sm">
-                      <span className="font-medium text-gray-700">Assessment:</span>{' '}
-                      <span className="text-gray-600">{ref.assessment || 'null'}</span>
-                    </p>
+                    {/* Assessment removed */}
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Professional Competence:</span>{' '}
                       <span className="text-gray-600">{ref.professional_competence || 'null'}</span>
@@ -524,8 +532,8 @@ export default function ApplicationDetailsPage() {
                         {ref.confidentiality_consent !== null && ref.confidentiality_consent !== undefined
                           ? ref.confidentiality_consent ? 'Yes' : 'No'
                           : 'null'}
-                      </span>                    
-                      </p>
+                      </span>
+                    </p>
                     <p className="text-sm">
                       <span className="font-medium text-gray-700">Submitted At:</span>{' '}
                       <span className="text-gray-600">{ref.submitted_at ? formatDate(ref.submitted_at) : 'null'}</span>
@@ -548,9 +556,9 @@ export default function ApplicationDetailsPage() {
                 <div key={index} className="border-l-4 border-blue-500 pl-4">
                   <h3 className="font-medium text-gray-900">{cert.certification_name || 'null'}</h3>
                   <p className="text-sm text-gray-600">{cert.certificate_title || 'null'}</p>
-                  <p className="text-sm text-gray-500">
-                    Issuing Body: {cert.issuing_body || 'null'}
-                  </p>
+                  <p className="text-sm text-gray-500">Issuing Body: {cert.issuing_body || 'null'}</p>
+                  <p className="text-sm text-gray-500">Date Obtained: {cert.date_obtained ? formatDate(cert.date_obtained) : 'N/A'}</p>
+                  <p className="text-sm text-gray-500">Expiry Date: {cert.expiry_date ? formatDate(cert.expiry_date) : 'N/A'}</p>
                 </div>
               ))}
             </div>
@@ -591,6 +599,23 @@ export default function ApplicationDetailsPage() {
                       className="btn-primary text-xs py-1 px-3"
                     >
                       Download
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const blob = await applicationsApi.getDocument(applicantId, doc.id);
+                          const url = window.URL.createObjectURL(blob);
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                          // Optionally revoke after some time
+                          setTimeout(() => window.URL.revokeObjectURL(url), 60 * 1000);
+                        } catch (error) {
+                          console.error('View error:', error);
+                          toast.error('Failed to open document');
+                        }
+                      }}
+                      className="btn-secondary text-xs py-1 px-3"
+                    >
+                      View
                     </button>
                   </div>
                 </div>

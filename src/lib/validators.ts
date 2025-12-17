@@ -79,13 +79,11 @@ export type EducationFormData = z.infer<typeof educationSchema>;
 
 export const experienceSchema = z.object({
     id: z.number().optional(),
-    company_name: z.string().min(1, 'Company name is required'),
+    organization_name: z.string().min(1, 'Organization name is required'),
     job_title: z.string().min(1, 'Job title is required'),
     start_date: z.string().min(1, 'Start date is required'),
     end_date: z.string().optional().nullable(),
-    is_current: z.boolean().optional(),
     responsibility: z.string().optional().nullable(),
-    reference_letter: z.string().optional().nullable(),
 });
 
 export type ExperienceFormData = z.infer<typeof experienceSchema>;

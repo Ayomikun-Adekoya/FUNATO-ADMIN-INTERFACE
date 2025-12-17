@@ -156,8 +156,8 @@ export interface Experience {
     id?: number;
     organization_name: string;
     job_title: string;
-    start_date: string;
-    end_date?: string | null;
+    start_date: string; // ISO string
+    end_date?: string | null; // ISO string or null
     responsibility?: string | null;
 }
 
@@ -188,8 +188,8 @@ export interface Certification {
     id?: number;
     certification_name: string;
     issuing_organization: string;
-    issuing_body:string;
-   certificate_title: string;
+    issuing_body: string;
+    certificate_title: string;
     certificate?: string | null; // file path or URL
 }
 

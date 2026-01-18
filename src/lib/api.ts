@@ -668,10 +668,26 @@ export const applicationsApi = {
             ? Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
             : undefined;
 
-        const { data } = await api.get<ApiResponse<PaginatedResponse<Application>>>(
+        const { data } = await api.get<any>(
             '/recruitment/applications',
             { params: cleanParams }
         );
+        
+        // Handle API response structure: { success: true, data: [...], pagination: {...} }
+        if (data && data.pagination) {
+            // Flatten the response to match PaginatedResponse structure
+            return {
+                data: data.data || [],
+                current_page: data.pagination.current_page,
+                per_page: data.pagination.per_page,
+                total: data.pagination.total,
+                last_page: data.pagination.last_page,
+                from: data.pagination.from,
+                to: data.pagination.to,
+            };
+        }
+        
+        // Fallback for other response structures
         return data.data;
     },
 

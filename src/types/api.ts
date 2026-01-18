@@ -130,10 +130,12 @@ export interface Application {
     home_town: string;
     lga: string;
     residential_address: string;
-    position_type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
+    position_type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship' | 'Academic' | 'Non-Academic' | 'Volunteer';
     preferred_start_date: string;
     how_did_you_hear?: string | null;
-    status?: 'pending' | 'reviewing' | 'accepted' | 'rejected';
+    college?: string | null;
+    department?: string | null;
+    status?: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
     created_at: string;
     updated_at: string;
     educational_backgrounds?: Education[];
@@ -229,6 +231,8 @@ export interface CreateApplicationRequest {
     position_type: string;
     preferred_start_date: string;
     how_did_you_hear?: string;
+    college?: string;
+    department?: string;
 
     // Documents (files)
     passport_photograph?: File;
@@ -249,6 +253,10 @@ export interface UpdateApplicationAdminRequest {
     email?: string;
     phone?: string;
     position_applied_for?: string;
+    college?: string | null;
+    department?: string | null;
+    college_id?: number | null;
+    department_id?: number | null;
     [key: string]: unknown;
 }
 
@@ -271,6 +279,17 @@ export interface ApplicationQueryParams {
     search?: string;
     per_page?: number;
     page?: number;
+}
+
+// Normalized response for handling both paginated and non-paginated API responses
+export interface NormalizedApplicationResponse {
+    data: Application[];
+    meta?: {
+        current_page: number;
+        per_page: number;
+        total: number;
+        last_page: number;
+    };
 }
 
 export interface UserQueryParams {
@@ -725,6 +744,79 @@ export interface AdmissionApplicationQueryParams {
     per_page?: number;
     page?: number;
 }
+
+// ============================================
+// NEWS MANAGEMENT TYPES
+// ============================================
+
+export interface News {
+    id: number;
+    news_heading: string;
+    news_description: string;
+    news_date: string; // ISO date
+    news_image?: string | null; // URL
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateNewsRequest {
+    news_heading: string;
+    news_description: string;
+    news_date: string;
+    news_image?: File | null;
+}
+
+export interface UpdateNewsRequest {
+    news_heading?: string;
+    news_description?: string;
+    news_date?: string;
+    news_image?: File | null | string; // allow keeping existing URL
+}
+
+// ============================================
+// CANDIDATE DATA TYPES
+// ============================================
+
+export interface CandidateRecord {
+    id?: number;
+    rg_num: string;
+    rg_candname: string;
+    rg_sex?: string;
+    state_name?: string;
+    lga_name?: string;
+    rg_aggr?: string | number;
+    co_name?: string;
+    Subject1?: string;
+    Subject2?: string;
+    Subject3?: string;
+    subject1?: string;
+    subject2?: string;
+    subject3?: string;
+    rg_sub1scor?: string | number;
+    rg_sub2scor?: string | number;
+    rg_sub3scor?: string | number;
+    eng_score?: string | number;
+    subj?: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: unknown;
+}
+
+export interface CandidateUploadResponse {
+    success: boolean;
+    message?: string;
+    errors?: Record<string, string[]>;
+}
+
+export interface CandidateDataQueryParams {
+    per_page?: number;
+    registration_number?: string;
+    candidate_name?: string;
+    state_name?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+}
+
 
 // Faculty Types
 export interface Faculty {

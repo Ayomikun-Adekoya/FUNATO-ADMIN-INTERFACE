@@ -5,7 +5,9 @@ import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Table from '@/components/Table';
 import Pagination from '@/components/Pagination';
-import { useAdmissions } from '@/lib/queries';
+import Modal from '@/components/Modal';
+import FileInput from '@/components/FileInput';
+import { useAdmissions, useBulkUpdateAdmissionStatus } from '@/lib/queries';
 import { formatDate } from '@/utils/date';
 import type { Admission } from '@/types/api';
 
@@ -15,8 +17,12 @@ export default function AdmissionsListPage() {
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
     const [decisionFilter, setDecisionFilter] = useState<'pending' | 'admitted' | 'rejected' | 'waitlisted' | ''>('');
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [bulkFile, setBulkFile] = useState<File | null>(null);
+    const [bulkStatus, setBulkStatus] = useState<'admitted' | 'not_admitted' | 'pending' | ''>('');
 
     const { data, isLoading } = useAdmissions({ page, per_page: perPage, search, decision: decisionFilter || undefined });
+    const bulkUpdateMutation = useBulkUpdateAdmissionStatus();
 
     // Client-side filter as workaround for backend search issues
     const filteredData = data?.data.filter((admission) => {
@@ -123,12 +129,20 @@ export default function AdmissionsListPage() {
                                 Manage student admission records
                             </p>
                         </div>
-                        <Link
-                            href="/admin/admissions/create"
-                            className="btn-primary"
-                        >
-                            Create Admission
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsBulkModalOpen(true)}
+                                className="btn"
+                            >
+                                Bulk Update Status
+                            </button>
+                            <Link
+                                href="/admin/admissions/create"
+                                className="btn-primary"
+                            >
+                                Create Admission
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="card">
@@ -198,6 +212,85 @@ export default function AdmissionsListPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Bulk Upload Modal */}
+                <Modal
+                    isOpen={isBulkModalOpen}
+                    onClose={() => {
+                        setIsBulkModalOpen(false);
+                        setBulkFile(null);
+                        setBulkStatus('');
+                    }}
+                    title="Bulk Update Admission Status"
+                    size="md"
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Status to Apply
+                            </label>
+                            <select
+                                value={bulkStatus}
+                                onChange={(e) => setBulkStatus(e.target.value as typeof bulkStatus)}
+                                className="input w-full"
+                            >
+                                <option value="">Select Status</option>
+                                <option value="admitted">Admitted</option>
+                                <option value="not_admitted">Not Admitted</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Upload File (Excel/CSV)
+                            </label>
+                            <FileInput
+                                accept=".xlsx,.xls,.csv"
+                                file={bulkFile}
+                                onChange={setBulkFile}
+                                placeholder="Choose Excel or CSV file"
+                            />
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                File should contain admission IDs in the first column
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 justify-end pt-4">
+                            <button
+                                onClick={() => {
+                                    setIsBulkModalOpen(false);
+                                    setBulkFile(null);
+                                    setBulkStatus('');
+                                }}
+                                className="btn"
+                                disabled={bulkUpdateMutation.isPending}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (bulkFile && bulkStatus) {
+                                        bulkUpdateMutation.mutate(
+                                            { file: bulkFile, status: bulkStatus },
+                                            {
+                                                onSuccess: () => {
+                                                    setIsBulkModalOpen(false);
+                                                    setBulkFile(null);
+                                                    setBulkStatus('');
+                                                },
+                                            }
+                                        );
+                                    }
+                                }}
+                                className="btn-primary"
+                                disabled={!bulkFile || !bulkStatus || bulkUpdateMutation.isPending}
+                            >
+                                {bulkUpdateMutation.isPending ? 'Uploading...' : 'Upload & Update'}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             </Layout>
         </ProtectedRoute>
     );

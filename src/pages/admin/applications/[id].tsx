@@ -1,7 +1,5 @@
 // pages/admin/applications/[id].tsx
-import { useState } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
@@ -17,20 +15,11 @@ import {
   useUpdateApplicationAdmin,
   useDeleteApplication,
 } from '@/lib/queries';
-import { applicationsApi } from '@/lib/api';
+import { applicationsApi, facultiesApi, departmentsApi } from '@/lib/api';
 import { formatDate } from '@/utils/date';
 import { getStatusColor, downloadBlob, isPDF, isImage } from '@/utils/format';
-import type { ApplicationDocument } from '@/types/api';
+import type { ApplicationDocument, Faculty, Department, UpdateApplicationAdminRequest } from '@/types/api';
 // import { boolean } from 'zod';
-
-// Extend jsPDF to include lastAutoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    lastAutoTable: {
-      finalY: number;
-    };
-  }
-}
 
 export default function ApplicationDetailsPage() {
   const router = useRouter();
@@ -46,6 +35,17 @@ export default function ApplicationDetailsPage() {
   const [statusModal, setStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
+  const [editAcademicModal, setEditAcademicModal] = useState(false);
+  // Use null for no-selection to avoid empty-string numeric coercion issues
+  const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [isEditingAcademic, setIsEditingAcademic] = useState(false);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingFaculties, setLoadingFaculties] = useState(false);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [academicError, setAcademicError] = useState<string>('');
   const [documentModal, setDocumentModal] = useState<{
     open: boolean;
     document: ApplicationDocument | null;
@@ -68,6 +68,115 @@ export default function ApplicationDetailsPage() {
         toast.error('Failed to update status');
       }
     }
+  };
+
+  const handleUpdateAcademicFields = async () => {
+    // Validation depends on position type
+    if (application?.position_type === 'Academic') {
+      if (!selectedFacultyId || !selectedDepartmentId) {
+        setAcademicError('College and Department are required for Academic positions');
+        return;
+      }
+    }
+
+    // Find the selected faculty and department names (may be undefined for non-academic)
+    const selectedFaculty = faculties.find((f) => f.id === selectedFacultyId) || null;
+    const selectedDepartment = departments.find((d) => d.id === selectedDepartmentId) || null;
+
+    try {
+      setIsEditingAcademic(true);
+      setAcademicError('');
+
+      const payload: UpdateApplicationAdminRequest = {
+        // Always include these fields based on modal state (names + ids) so backend can persist on first-time sets
+        college: selectedFaculty ? selectedFaculty.name : null,
+        college_id: selectedFaculty ? selectedFaculty.id : null,
+        department: selectedDepartment ? selectedDepartment.name : null,
+        department_id: selectedDepartment ? selectedDepartment.id : null,
+      };
+
+      await updateMutation.mutateAsync({
+        applicantId,
+        data: payload,
+      });
+      setEditAcademicModal(false);
+      toast.success('College and Department updated successfully!');
+    } catch (error: unknown) {
+      console.error('Update academic fields error:', error);
+      // @ts-expect-error: error may be an AxiosError
+      if (typeof error === 'object' && error && 'response' in error && error.response?.data?.message) {
+        // @ts-expect-error: error may be an AxiosError
+        setAcademicError(error.response.data.message);
+      } else {
+        setAcademicError('Failed to update College and Department');
+      }
+    } finally {
+      setIsEditingAcademic(false);
+    }
+  };
+
+  // Load faculties and all departments when modal opens
+  useEffect(() => {
+    if (!editAcademicModal) return;
+
+    const loadReferenceData = async () => {
+      try {
+        setLoadingFaculties(true);
+        setLoadingDepartments(true);
+        setAcademicError('');
+
+        const facultiesResp = await facultiesApi.getAll();
+        setFaculties(facultiesResp.data);
+
+        // Preselect faculty by matching stored college name (if any)
+        if (application?.college && facultiesResp.data.length > 0) {
+          const currentFaculty = facultiesResp.data.find((f) => f.name === application.college);
+          if (currentFaculty) {
+            setSelectedFacultyId(currentFaculty.id);
+          }
+        }
+
+        const departmentsResp = await departmentsApi.getAll();
+        setAllDepartments(departmentsResp.data);
+      } catch (error) {
+        console.error('Error loading reference data:', error);
+        setAcademicError('Failed to load reference data');
+      } finally {
+        setLoadingFaculties(false);
+        setLoadingDepartments(false);
+      }
+    };
+
+    loadReferenceData();
+  }, [editAcademicModal, application?.college]);
+
+  // Filter departments when selectedFacultyId or allDepartments change
+  useEffect(() => {
+    if (!editAcademicModal || selectedFacultyId == null) {
+      setDepartments([]);
+      setSelectedDepartmentId(null);
+      return;
+    }
+
+    const filteredDepartments = allDepartments.filter((dept) => Number(dept.faculty_id) === Number(selectedFacultyId));
+    setDepartments(filteredDepartments);
+
+    // Preselect current department if it matches
+    if (application?.department && filteredDepartments.length > 0) {
+      const currentDepartment = filteredDepartments.find((d) => d.name === application.department);
+      if (currentDepartment) {
+        setSelectedDepartmentId(currentDepartment.id);
+      } else {
+        setSelectedDepartmentId(null);
+      }
+    }
+  }, [selectedFacultyId, allDepartments, editAcademicModal, application?.department]);
+
+  const handleOpenEditAcademicModal = () => {
+    setSelectedFacultyId(null);
+    setSelectedDepartmentId(null);
+    setAcademicError('');
+    setEditAcademicModal(true);
   };
 
   const handleDelete = async () => {
@@ -123,8 +232,15 @@ export default function ApplicationDetailsPage() {
   }
 
   // Print single application as PDF (excluding created_at and updated_at)
-  const handlePrintPDF = () => {
-    if (!application) return;
+  const handlePrintPDF = async () => {
+    if (!application || typeof window === 'undefined') return;
+    
+    // Dynamically import jsPDF only in the browser
+    const jsPDFModule = await import('jspdf');
+    const autoTableModule = await import('jspdf-autotable');
+    const jsPDF = jsPDFModule.default as any;
+    const autoTable = autoTableModule.default as any;
+    
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text(`Application: ${application.applicant_id} — ${application.first_name} ${application.last_name}`, 10, 14);
@@ -166,6 +282,13 @@ export default function ApplicationDetailsPage() {
       ['Position Type', application.position_type],
       ['Status', application.status || 'pending'],
     ];
+    
+    // Add college and department for Academic positions
+    if (application.position_type === 'Academic') {
+      positionRows.push(['College', application.college || 'N/A']);
+      positionRows.push(['Department', application.department || 'N/A']);
+    }
+    
     autoTable(doc, { head: [['Field', 'Value']], body: positionRows, startY: y, styles: { fontSize: 9 } });
     y = doc.lastAutoTable.finalY + 6;
 
@@ -345,12 +468,14 @@ export default function ApplicationDetailsPage() {
             <button onClick={() => setStatusModal(true)} className="btn-secondary">
               Update Status
             </button>
+            <button onClick={handleOpenEditAcademicModal} className="btn-secondary">
+              Edit College/Department
+            </button>
             <button onClick={() => setDeleteModal(true)} className="btn-danger">
               Delete
             </button>
           </div>
         </div>
-
         {/* Personal Information */}
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h2>
@@ -388,7 +513,18 @@ export default function ApplicationDetailsPage() {
               <dt className="text-sm font-medium text-gray-500">Position Type</dt>
               <dd className="mt-1 text-sm text-gray-900">{application.position_type}</dd>
             </div>
-
+            {application.position_type === 'Academic' && (
+              <>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">College</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{application.college || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Department</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{application.department || '—'}</dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
 
@@ -653,6 +789,78 @@ export default function ApplicationDetailsPage() {
                 className="btn-primary disabled:opacity-50"
               >
                 {updateMutation.isPending ? 'Updating...' : 'Update'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal isOpen={editAcademicModal} onClose={() => setEditAcademicModal(false)} title="Edit College and Department">
+          <div className="space-y-4">
+            {academicError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                {academicError}
+              </div>
+            )}
+
+            <div>
+              <label className="label">College {application?.position_type === 'Academic' ? '*' : ''}</label>
+              <select
+                value={selectedFacultyId ?? ''}
+                onChange={(e) => {
+                  const facultyId = e.target.value ? parseInt(e.target.value, 10) : null;
+                  setSelectedFacultyId(facultyId);
+                  setSelectedDepartmentId(null);
+                }}
+                disabled={loadingFaculties || isEditingAcademic}
+                className="input"
+              >
+                <option value="">{loadingFaculties ? 'Loading colleges...' : faculties.length ? 'Select a college' : 'No colleges available'}</option>
+                {faculties.map((faculty) => (
+                  <option key={faculty.id} value={faculty.id}>
+                    {faculty.name}
+                  </option>
+                ))}
+              </select>
+              {loadingFaculties && (
+                <p className="text-xs text-gray-500 mt-1">Loading colleges...</p>
+              )}
+            </div>
+
+            <div>
+              <label className="label">Department {application?.position_type === 'Academic' ? '*' : ''}</label>
+              <select
+                value={(selectedDepartmentId ?? '') as number | string}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSelectedDepartmentId(v ? Number(v) : null);
+                }}
+                disabled={selectedFacultyId == null || loadingDepartments || isEditingAcademic}
+                className="input"
+              >
+                <option value="">{selectedFacultyId == null ? 'Select a college first' : loadingDepartments ? 'Loading departments...' : departments.length ? 'Select a department' : 'No departments available'}</option>
+                {departments.map((department) => (
+                  <option key={department.id} value={department.id}>{department.name}</option>
+                ))}
+              </select>
+              {loadingDepartments && (
+                <p className="text-xs text-gray-500 mt-1">Loading departments...</p>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setEditAcademicModal(false)}
+                className="btn-secondary"
+                disabled={isEditingAcademic}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateAcademicFields}
+                disabled={isEditingAcademic || loadingFaculties || loadingDepartments || (application?.position_type === 'Academic' && (!selectedFacultyId || !selectedDepartmentId))}
+                className="btn-primary disabled:opacity-50"
+              >
+                {isEditingAcademic ? 'Updating...' : 'Update'}
               </button>
             </div>
           </div>

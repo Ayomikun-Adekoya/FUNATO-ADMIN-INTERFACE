@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosProgressEvent } from 'axios';
 import type {
     ApiResponse,
     PaginatedResponse,
@@ -85,6 +85,8 @@ import type {
     CreateCourseRequest,
     UpdateCourseRequest,
     CourseQueryParams,
+    CandidateDataQueryParams,
+    CandidateRecord,
 } from '@/types/api';
 import { toast } from 'react-toastify';
 
@@ -111,11 +113,25 @@ const removeToken = (): void => {
 };
 
 // Create axios instance
+const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ??
+    'https://api.funato.edu.ng/api';
+
+export const API_BASE_URL = apiBaseUrl;
+
+
+// Log API base URL for debugging (always log to help diagnose production issues)
+if (typeof window !== 'undefined') {
+    console.log('API Base URL:', apiBaseUrl);
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+        console.log('Original NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+    }
+}
+
 export const api: AxiosInstance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.funato.com.ng/api',
+    baseURL: apiBaseUrl,
     headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
     },
     timeout: 30000,
 });
@@ -148,6 +164,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
+        // Check for CORS errors
+        if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+            const apiUrl = error.config?.baseURL || apiBaseUrl;
+            console.error('CORS Error: The API server needs to allow requests from this origin.');
+            console.error('API URL:', apiUrl);
+            console.error('Request URL:', error.config?.url);
+            console.error('Full URL:', `${apiUrl}${error.config?.url}`);
+            toast.error('CORS Error: Unable to connect to API server. Please check API configuration.');
+        }
+
         if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
             // Never log sensitive data like passwords or tokens
             const sanitizedResponseData = error.response?.data
@@ -160,6 +186,7 @@ api.interceptors.response.use(
                 status: error.response?.status,
                 statusText: error.response?.statusText,
                 url: error.config?.url,
+                baseURL: error.config?.baseURL,
                 method: error.config?.method,
                 // Don't log headers as they may contain tokens
                 responseData: sanitizedResponseData,
@@ -181,18 +208,27 @@ api.interceptors.response.use(
         } else if (response?.status === 403) {
             // Forbidden - Permission denied
             const message = String(errorData?.message || 'You do not have permission to perform this action.');
-            toast.error(message);
-
-            // Optionally redirect to dashboard or previous page
-            if (typeof window !== 'undefined') {
+            
+            // Check if this is an auth endpoint - if so, treat it like 401
+            const isAuthEndpoint = error.config?.url?.includes('/auth/');
+            if (isAuthEndpoint) {
+                // Auth endpoint returned 403 - could be CORS or server issue
+                // Don't clear token immediately - might be temporary issue
+                // Only clear if it's a 401 (unauthorized), not 403 (forbidden)
+                // 403 on auth endpoint might be server configuration issue
+                if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+                    console.warn('Auth endpoint returned 403 - this might be a CORS or server configuration issue');
+                }
+                // Don't clear token or redirect - let ProtectedRoute handle it
+                // The token is still valid, just the API call failed
+            } else {
+                // Regular permission error - show message but don't redirect
+                toast.error(message);
+                
                 // Store the error so we can show it on the dashboard
-                sessionStorage.setItem('permission_error', message);
-                // Redirect after a short delay
-                setTimeout(() => {
-                    if (window.location.pathname !== '/admin') {
-                        window.location.href = '/admin';
-                    }
-                }, 1500);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('permission_error', message);
+                }
             }
         } else if (response?.status === 404) {
             // Not found
@@ -426,6 +462,18 @@ export const admissionsApi = {
         const { data } = await api.put<ApiResponse<Admission>>(`/admin/admission/admissions/${id}`, admissionData);
         return data.data;
     },
+
+    bulkUpdateStatus: async (file: File, status: string): Promise<{ message: string; success: boolean }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('status', status);
+        const { data } = await api.post<ApiResponse<{ message: string; success: boolean }>>('/admin/admission/admissions/bulk-update-status', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return data.data;
+    },
 };
 
 // ============================================
@@ -520,6 +568,60 @@ export const departmentsApi = {
 
     delete: async (id: number): Promise<void> => {
         await api.delete(`/admin/departments/${id}`);
+    },
+};
+
+// ============================================
+// REPORTS API (Admin)
+// ============================================
+
+export const reportsApi = {
+    // Department: GET /admin/admission/students/department/{departmentId}
+    getStudentsByDepartment: async (
+        departmentId: number,
+        yearOfEntry?: number,
+        per_page?: number,
+        page?: number,
+    ): Promise<ApiResponse<PaginatedResponse<any>>> => {
+        const params: Record<string, unknown> = {};
+        if (yearOfEntry) params.year_of_entry = yearOfEntry;
+        if (per_page) params.per_page = per_page;
+        if (page) params.page = page;
+
+        const { data } = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/admission/students/department/${departmentId}`, { params });
+        return data;
+    },
+
+    // Faculty: GET /admin/admission/students/faculty/{facultyId}
+    getStudentsByFaculty: async (
+        facultyId: number,
+        yearOfEntry?: number,
+        per_page?: number,
+        page?: number,
+    ): Promise<ApiResponse<PaginatedResponse<any>>> => {
+        const params: Record<string, unknown> = {};
+        if (yearOfEntry) params.year_of_entry = yearOfEntry;
+        if (per_page) params.per_page = per_page;
+        if (page) params.page = page;
+
+        const { data } = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/admission/students/faculty/${facultyId}`, { params });
+        return data;
+    },
+
+    // Program: GET /admin/admission/students/program/{programId}
+    getStudentsByProgram: async (
+        programId: number,
+        yearOfEntry?: number,
+        per_page?: number,
+        page?: number,
+    ): Promise<ApiResponse<PaginatedResponse<any>>> => {
+        const params: Record<string, unknown> = {};
+        if (yearOfEntry) params.year_of_entry = yearOfEntry;
+        if (per_page) params.per_page = per_page;
+        if (page) params.page = page;
+
+        const { data } = await api.get<ApiResponse<PaginatedResponse<any>>>(`/admin/admission/students/program/${programId}`, { params });
+        return data;
     },
 };
 
@@ -973,6 +1075,148 @@ export const coursesApi = {
 
     delete: async (id: number): Promise<void> => {
         await api.delete(`/admin/courses/${id}`);
+    },
+};
+
+// ============================================
+// NEWS API (Admin)
+// ============================================
+
+export const newsApi = {
+    getAll: async (params?: { per_page?: number; page?: number; search?: string }) => {
+        const cleanParams = params ? Object.fromEntries(
+            Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+        ) : undefined;
+        const { data } = await api.get<ApiResponse<PaginatedResponse<import('@/types/api').News>>>("/admin/news", { params: cleanParams });
+        return data.data;
+    },
+
+    getById: async (id: number) => {
+        const { data } = await api.get<ApiResponse<import('@/types/api').News>>(`/admin/news/${id}`);
+        return data.data;
+    },
+
+    create: async (newsData: import('@/types/api').CreateNewsRequest) => {
+        const formData = new FormData();
+        formData.append('news_heading', String(newsData.news_heading));
+        formData.append('news_description', String(newsData.news_description));
+        formData.append('news_date', String(newsData.news_date));
+        if (newsData.news_image instanceof File) formData.append('news_image', newsData.news_image);
+
+        const headers: Record<string, string> = {};
+        const csrf = process.env.CSRF_API_KEY;
+        if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+
+        const { data } = await api.post<ApiResponse<import('@/types/api').News>>('/admin/news', formData, { headers });
+        return data.data;
+    },
+
+    update: async (id: number, newsData: import('@/types/api').UpdateNewsRequest) => {
+        const formData = new FormData();
+        if (newsData.news_heading) formData.append('news_heading', String(newsData.news_heading));
+        if (newsData.news_description) formData.append('news_description', String(newsData.news_description));
+        if (newsData.news_date) formData.append('news_date', String(newsData.news_date));
+        if (newsData.news_image instanceof File) formData.append('news_image', newsData.news_image);
+
+        const headers: Record<string, string> = {};
+        const csrf = process.env.CSRF_API_KEY;
+        if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+
+        const { data } = await api.patch<ApiResponse<import('@/types/api').News>>(`/admin/news/${id}`, formData, { headers });
+        return data.data;
+    },
+
+    delete: async (id: number) => {
+        await api.delete(`/admin/news/${id}`);
+    },
+};
+
+// ============================================
+// CANDIDATE DATA API (Admin)
+// ============================================
+
+export const candidateDataApi = {
+    getAll: async (params?: CandidateDataQueryParams): Promise<PaginatedResponse<CandidateRecord>> => {
+        try {
+            // Build query parameters, excluding undefined/null values
+            const queryParams: any = {};
+            if (params) {
+                if (params.per_page) queryParams.per_page = params.per_page;
+                if (params.registration_number) queryParams.registration_number = params.registration_number;
+                if (params.candidate_name) queryParams.candidate_name = params.candidate_name;
+                if (params.state_name) queryParams.state_name = params.state_name;
+                if (params.sort_by) queryParams.sort_by = params.sort_by;
+                if (params.sort_order) queryParams.sort_order = params.sort_order;
+            }
+            
+            const { data } = await api.get<any>('/admin/candidate-data', {
+                params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+            });
+            
+            // Handle the response structure which has data and pagination as separate fields
+            const candidateData = data.data || [];
+            const paginationData = data.pagination || {};
+            
+            // Return a PaginatedResponse structure
+            return {
+                data: candidateData,
+                current_page: paginationData.current_page || 1,
+                per_page: paginationData.per_page || 15,
+                total: paginationData.total || 0,
+                last_page: paginationData.last_page || 1,
+                from: paginationData.from || 1,
+                to: paginationData.to || 15,
+            };
+        } catch (error: any) {
+            console.error('Error fetching candidate data:', error);
+            throw error;
+        }
+    },
+
+    upload: async (file: File, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void) => {
+        const formData = new FormData();
+        // Normalize mime type based on extension to satisfy backend validators
+        const name = file.name || '';
+        const ext = name.split('.').pop()?.toLowerCase() || '';
+        const mimeMap: Record<string, string> = {
+            xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            xls: 'application/vnd.ms-excel',
+            csv: 'text/csv',
+        };
+        const expectedType = mimeMap[ext] || file.type || 'application/octet-stream';
+        const normalizedFile = new File([file], name, { type: expectedType });
+
+        // Append only under the expected 'file' key
+        formData.append('file', normalizedFile);
+
+        const headers: Record<string, string> = {};
+        const csrf = process.env.CSRF_API_KEY;
+        if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+
+        try {
+            const { data } = await api.post<ApiResponse<import('@/types/api').CandidateUploadResponse>>('/admin/candidate-data/upload', formData, {
+                headers,
+                onUploadProgress,
+            });
+            return data.data;
+        } catch (error: any) {
+            // surface validation details if available
+            if (error.response && error.response.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
+
+    getByRegistrationNumber: async (registrationNumber: string): Promise<import('@/types/api').CandidateRecord | null> => {
+        try {
+            const { data } = await api.get<ApiResponse<import('@/types/api').CandidateRecord>>(`/admin/candidate-data/${encodeURIComponent(registrationNumber)}`);
+            return data.data;
+        } catch (err: any) {
+            // If not found, return null so UI can show a friendly message
+            if (err?.response?.status === 404) return null;
+            throw err;
+        }
     },
 };
 

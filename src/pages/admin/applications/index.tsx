@@ -17,13 +17,17 @@ export default function ApplicationsListPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [positionTypeFilter, setPositionTypeFilter] = useState('');
 
-  const { data, isLoading } = useApplications({
+  const { data: normalizedData, isLoading } = useApplications({
     page,
     per_page: perPage,
     search,
     status: statusFilter,
     position_type: positionTypeFilter,
   });
+
+  // Safely access normalized data
+  const data = normalizedData?.data || [];
+  const meta = normalizedData?.meta;
 
 
   const columns = [
@@ -47,6 +51,20 @@ export default function ApplicationsListPage() {
           <div className="text-sm text-gray-900">{truncate(app.position_applied_for, 30)}</div>
           <div className="text-xs text-gray-500">{app.position_type}</div>
         </div>
+      ),
+    },
+    {
+      key: 'academic_info',
+      header: 'College / Department',
+      render: (app: Application) => (
+        app.position_type === 'Academic' ? (
+          <div>
+            <div className="text-sm text-gray-900">{app.college || '—'}</div>
+            <div className="text-xs text-gray-500">{app.department || '—'}</div>
+          </div>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        )
       ),
     },
     {
@@ -124,9 +142,10 @@ export default function ApplicationsListPage() {
               >
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
-                <option value="reviewing">Reviewing</option>
-                <option value="accepted">Accepted</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="shortlisted">Shortlisted</option>
                 <option value="rejected">Rejected</option>
+                <option value="hired">Hired</option>
               </select>
               <select
                 value={positionTypeFilter}
@@ -138,19 +157,20 @@ export default function ApplicationsListPage() {
               >
                 <option value="">All Position Types</option>
                 <option value="Academic">Academic</option>
-                <option value="Non‑Academic">Non‑Academic</option>
+                <option value="Non-Academic">Non-Academic</option>
+                <option value="Volunteer">Volunteer</option>
               </select>
             </div>
           </div>
 
-          <Table data={data?.data || []} columns={columns} isLoading={isLoading} />
+          <Table data={data} columns={columns} isLoading={isLoading} />
 
-          {data && (
+          {meta && (
             <Pagination
-              currentPage={data.current_page}
-              totalPages={data.last_page}
-              perPage={data.per_page}
-              total={data.total}
+              currentPage={meta.current_page}
+              totalPages={meta.last_page}
+              perPage={meta.per_page}
+              total={meta.total}
               onPageChange={setPage}
               onPerPageChange={setPerPage}
             />

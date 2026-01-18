@@ -150,7 +150,16 @@ export const updateApplicationAdminSchema = z.object({
     email: z.string().email('Invalid email address').optional(),
     phone: z.string().optional(),
     position_applied_for: z.string().optional(),
+    college: z.string().nullable().optional(),
+    department: z.string().nullable().optional(),
     // Add other fields as needed
+}).refine((data) => {
+    // If position_type is Academic (from context), college and department are required
+    // Note: position_type would need to be included in the request for this validation to work
+    // For now, we recommend validating this on the backend
+    return true;
+}, {
+    message: "Validation needs position_type context",
 });
 
 export type UpdateApplicationAdminFormData = z.infer<typeof updateApplicationAdminSchema>;
@@ -392,3 +401,34 @@ export const updateCourseSchema = z.object({
 });
 
 export type UpdateCourseFormData = z.infer<typeof updateCourseSchema>;
+
+// ============================================
+// VALIDATION HELPERS
+// ============================================
+
+/**
+ * Validates college and department requirements based on position_type
+ * - Required when position_type is 'Academic'
+ * - Optional for 'Non-Academic', 'Volunteer', or other types
+ */
+export const validateAcademicPositionFields = (
+    positionType: string,
+    college?: string | null,
+    department?: string | null
+): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    if (positionType === 'Academic') {
+        if (!college || college.trim() === '') {
+            errors.push('College is required for Academic positions');
+        }
+        if (!department || department.trim() === '') {
+            errors.push('Department is required for Academic positions');
+        }
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors,
+    };
+};

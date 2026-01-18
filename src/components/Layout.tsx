@@ -17,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const queryClient = useQueryClient();
+    const [mounted, setMounted] = useState(false);
 
     // Initialize theme from localStorage
     useEffect(() => {
@@ -27,6 +28,16 @@ export default function Layout({ children }: LayoutProps) {
         setIsDarkMode(shouldBeDark);
         document.documentElement.classList.toggle('dark', shouldBeDark);
     }, []);
+
+    // Track client hydration to avoid rendering differences between server and client
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Hard hydration gate: don't render interactive UI until mounted on client
+    if (!mounted) {
+        return <div className="min-h-screen bg-gray-50 dark:bg-gray-900" />;
+    }
 
     // Toggle theme
     const toggleTheme = () => {
@@ -105,6 +116,24 @@ export default function Layout({ children }: LayoutProps) {
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12H8m8 0a4 4 0 11-8 0 4 4 0 018 0zm-8 0v4m0-4V8" />
+                </svg>
+            )
+        },
+        {
+            name: 'News',
+            href: '/admin/news',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v9a2 2 0 01-2 2zM7 8v6" />
+                </svg>
+            )
+        },
+        {
+            name: 'Candidate Data',
+            href: '/admin/candidate-data',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18M6 7v10" />
                 </svg>
             )
         },
@@ -209,6 +238,28 @@ export default function Layout({ children }: LayoutProps) {
         },
     ];
 
+    // REPORTS Navigation (Admin)
+    const reportsNavigation = [
+        {
+            name: 'Student Reports',
+            href: '/admin/reports/students-by-department',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3h8v4M5 7h14v13H5z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Recruitment Applications',
+            href: '/admin/reports/recruitment-applications',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            )
+        },
+    ];
+
     const isActive = (path: string) => {
         if (path === '/admin') {
             return router.pathname === path;
@@ -216,13 +267,7 @@ export default function Layout({ children }: LayoutProps) {
         return router.pathname.startsWith(path);
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="spinner h-12 w-12"></div>
-            </div>
-        );
-    }
+    
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -369,45 +414,62 @@ export default function Layout({ children }: LayoutProps) {
                                 <span className={`transition-all duration-200 ${isSidebarOpen ? 'opacity-100 ml-2' : 'opacity-0 w-0 overflow-hidden ml-0'}`}>{item.name}</span>
                             </Link>
                         ))}
+
+                        {/* Reports Section */}
+                        {isSidebarOpen && (
+                            <div className="pt-6 pb-2">
+                                <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Reports
+                                </h3>
+                            </div>
+                        )}
+                        {reportsNavigation.map((item) => (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={isActive(item.href) ? 'sidebar-link-active' : 'sidebar-link'}
+                            >
+                                <span className={isSidebarOpen ? 'w-5 h-5' : 'w-7 h-7'}>{item.icon}</span>
+                                <span className={`transition-all duration-200 ${isSidebarOpen ? 'opacity-100 ml-2' : 'opacity-0 w-0 overflow-hidden ml-0'}`}>{item.name}</span>
+                            </Link>
+                        ))}
                     </nav>
 
-                    {/* User section */}
-                    {user && (
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                            <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-900">
-                                    <span className="text-sm font-semibold text-white">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </span>
+                    {/* User section - always render the container to keep DOM shape stable */}
+                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                        {user ? (
+                            <>
+                                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-900">
+                                        <span className="text-sm font-semibold text-white">{user.name.charAt(0).toUpperCase()}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                disabled={isLoggingOut}
-                                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 dark:text-red-400 
-                                         bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 
-                                         transition-all duration-200 active:scale-95 ${isLoggingOut ? 'opacity-60 pointer-events-none' : ''}`}
-                            >
-                                {isLoggingOut ? (
-                                    <>
-                                        <svg className="spinner h-4 w-4" viewBox="0 0 24 24"></svg>
-                                        <span>Logging out...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                        </svg>
-                                        Logout
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    )}
+                                <button
+                                    onClick={handleLogout}
+                                    disabled={isLoggingOut}
+                                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 active:scale-95 ${isLoggingOut ? 'opacity-60 pointer-events-none' : ''}`}
+                                >
+                                    {isLoggingOut ? (
+                                        <>
+                                            <svg className="spinner h-4 w-4" viewBox="0 0 24 24"></svg>
+                                            <span>Logging out...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                            </svg>
+                                            Logout
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        ) : null}
+                    </div>
                 </div>
             </aside>
 

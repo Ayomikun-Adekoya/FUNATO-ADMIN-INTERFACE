@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '@/lib/api';
 
 export default function SendStudentEmails() {
     function validateEmail(email: string) {
@@ -91,7 +92,7 @@ export default function SendStudentEmails() {
         setLoading(true);
         setResult(null);
         try {
-            const res = await fetch('https://api.funato.com.ng/api/admin/send-student-emails', {
+            const res = await fetch(`${API_BASE_URL}/admin/send-student-emails`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

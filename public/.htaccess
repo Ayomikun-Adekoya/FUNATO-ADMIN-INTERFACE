@@ -1,0 +1,70 @@
+# Enable Rewrite Engine
+RewriteEngine On
+RewriteBase /
+
+# Disable directory browsing and enable symlinks
+Options -Indexes +FollowSymLinks
+
+# Allow access to all files
+<FilesMatch "\.(html|htm|css|js|json|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|eot|pdf|webp|mp4|webm|map)$">
+    Require all granted
+</FilesMatch>
+
+# Prevent directory access issues - if admin directory exists, serve admin.html instead
+<IfModule mod_dir.c>
+    DirectoryIndex admin.html index.html
+</IfModule>
+
+# Handle Next.js _next static files first (no rewriting needed, just pass through)
+RewriteRule ^_next/ - [L]
+
+# Redirect root to /admin/login
+RewriteCond %{REQUEST_URI} ^/$
+RewriteRule ^$ /admin/login [R=301,L]
+
+# Handle /admin/ and /admin - serve admin.html directly (no redirect to avoid 403)
+RewriteCond %{REQUEST_URI} ^/admin/?$
+RewriteCond %{DOCUMENT_ROOT}/admin.html -f
+RewriteRule ^admin/?$ /admin.html [L]
+
+# Handle all /admin/* routes (with or without trailing slash) - serve admin.html for client-side routing
+# This fixes the 403 error when refreshing on routes like /admin/registration
+# Must be before trailing slash removal to catch /admin/registration/ before Apache treats it as directory
+RewriteCond %{REQUEST_URI} ^/admin/.+
+RewriteCond %{REQUEST_URI} !^/admin/login
+RewriteCond %{DOCUMENT_ROOT}/admin.html -f
+RewriteRule ^admin/.*$ /admin.html [L]
+
+# Remove trailing slashes for other paths (except root, _next, and admin routes)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/_next/
+RewriteCond %{REQUEST_URI} !^/$
+RewriteCond %{REQUEST_URI} !^/admin/
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^(.+)/$ /$1 [R=301,L]
+
+# Serve .html files without extension
+# This handles both /admin and /admin/login
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/_next/
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.html -f
+RewriteRule ^(.*)$ $1.html [L]
+
+# Fallback to index.html for any remaining requests (SPA routing)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/_next/
+RewriteCond %{REQUEST_URI} !^/admin/
+RewriteRule ^(.*)$ /index.html [L]
+
+# Default index file
+DirectoryIndex index.html
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

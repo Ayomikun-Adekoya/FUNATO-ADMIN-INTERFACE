@@ -13,6 +13,7 @@ import {
     admissionApplicationsApi,
     facultiesApi,
     departmentsApi,
+    reportsApi,
     modeOfEntriesApi,
     programsApi,
     registrationsApi,
@@ -102,6 +103,7 @@ import type {
     CreateCourseRequest,
     UpdateCourseRequest,
     CourseQueryParams,
+    NormalizedApplicationResponse,
 } from '@/types/api';
 
 // ============================================
@@ -152,11 +154,32 @@ export const handleQueryError = (error: unknown, context?: string) => {
 // ============================================
 
 export const useCurrentUser = (): UseQueryResult<AuthUser, Error> => {
+    // Check if we have a token - if not, don't make the API call
+    const hasToken = typeof window !== 'undefined' && localStorage.getItem('auth_token') !== null;
+    
+    // Get cached user data from localStorage as initial data
+    let initialUserData: AuthUser | undefined = undefined;
+    if (typeof window !== 'undefined') {
+        const cachedUser = localStorage.getItem('auth_user');
+        if (cachedUser) {
+            try {
+                initialUserData = JSON.parse(cachedUser) as AuthUser;
+            } catch {
+                // Invalid cached data, ignore
+            }
+        }
+    }
+    
     return useQuery({
         queryKey: ['currentUser'],
         queryFn: () => authApi.me(),
-        retry: false,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        enabled: hasToken, // Only run if we have a token
+        retry: false, // Don't retry - if it fails, use cached data
+        staleTime: Infinity, // Never consider data stale - use cached data indefinitely
+        gcTime: Infinity, // Never garbage collect - keep cached data
+        initialData: initialUserData, // Use cached data from localStorage
+        // Fail silently - don't throw errors, just return cached data
+        throwOnError: false,
     });
 };
 
@@ -313,11 +336,59 @@ export const usePermissions = (): UseQueryResult<Permission[], Error> => {
 // APPLICATION QUERIES (UPDATED FOR applicant_id)
 // ============================================
 
+/**
+ * Normalize API response to handle both paginated and non-paginated responses
+ * API returns:
+ * - Paginated (with filters): { data: { current_page, data: [], per_page, total, last_page } }
+ * - Non-paginated (no filters): { data: [] }
+ */
+const normalizeApplicationsResponse = (response: any): NormalizedApplicationResponse => {
+    // Check if response is a paginated response (has current_page property)
+    if (response && typeof response === 'object' && 'current_page' in response) {
+        // Paginated response
+        return {
+            data: response.data || [],
+            meta: {
+                current_page: response.current_page || 1,
+                per_page: response.per_page || 10,
+                total: response.total || 0,
+                last_page: response.last_page || 1,
+            },
+        };
+    }
 
-export const useApplications = (params?: ApplicationQueryParams): UseQueryResult<PaginatedResponse<Application>, Error> => {
+    // Non-paginated response (array of applications)
+    if (Array.isArray(response)) {
+        return {
+            data: response,
+            meta: {
+                current_page: 1,
+                per_page: response.length,
+                total: response.length,
+                last_page: 1,
+            },
+        };
+    }
+
+    // Fallback to empty response
+    return {
+        data: [],
+        meta: {
+            current_page: 1,
+            per_page: 0,
+            total: 0,
+            last_page: 1,
+        },
+    };
+};
+
+export const useApplications = (params?: ApplicationQueryParams): UseQueryResult<NormalizedApplicationResponse, Error> => {
     return useQuery({
         queryKey: ['applications', params],
-        queryFn: () => applicationsApi.getAll(params),
+        queryFn: async () => {
+            const response = await applicationsApi.getAll(params);
+            return normalizeApplicationsResponse(response);
+        },
     });
 };
 
@@ -771,6 +842,21 @@ export const useUpdateAdmission = (): UseMutationResult<Admission, Error, { id: 
     });
 };
 
+export const useBulkUpdateAdmissionStatus = (): UseMutationResult<{ message: string; success: boolean }, Error, { file: File; status: string }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ file, status }: { file: File; status: string }) => admissionsApi.bulkUpdateStatus(file, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admissions'] });
+            toast.success('Admission statuses updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
 // ============================================
 // ADMISSION APPLICATIONS QUERIES (Student Applications)
 // ============================================
@@ -867,6 +953,28 @@ export const useDepartment = (id: number): UseQueryResult<Department, Error> => 
         queryKey: ['departments', id],
         queryFn: () => departmentsApi.getById(id),
         enabled: !!id,
+    });
+};
+
+// Generic hook to fetch students by scope (department | faculty | program)
+export const useStudentsReport = (
+    type: 'department' | 'faculty' | 'program' | undefined,
+    id?: number,
+    yearOfEntry?: number,
+    page?: number,
+    per_page?: number
+) => {
+    return useQuery({
+        queryKey: ['students', type, id, yearOfEntry, page, per_page],
+        queryFn: async () => {
+            if (!type || !id) throw new Error('Invalid report parameters');
+
+            if (type === 'department') return await reportsApi.getStudentsByDepartment(id, yearOfEntry, per_page, page);
+            if (type === 'faculty') return await reportsApi.getStudentsByFaculty(id, yearOfEntry, per_page, page);
+            return await reportsApi.getStudentsByProgram(id, yearOfEntry, per_page, page);
+        },
+        enabled: !!type && !!id,
+        retry: false,
     });
 };
 

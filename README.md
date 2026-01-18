@@ -41,7 +41,7 @@ npm install
 
 3. Configure environment variables in `.env.local`:
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://api.funato.com.ng/api
+NEXT_PUBLIC_API_BASE_URL=https://api.funato.edu.ng/api
 NEXTAUTH_URL=http://localhost:3000
 CSRF_API_KEY=your-csrf-token-here
 DEV_BEARER_TOKEN=your-dev-token-here

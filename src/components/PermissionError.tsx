@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function PermissionError() {
-    const [errorMessage, setErrorMessage] = useState<string | null>(() => {
-        // Check if there's a stored permission error
-        const storedError = sessionStorage.getItem('permission_error');
-        if (storedError) {
-            // Clear it after reading
-            sessionStorage.removeItem('permission_error');
-            return storedError;
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Only access sessionStorage in the browser
+        if (typeof window !== 'undefined') {
+            const storedError = sessionStorage.getItem('permission_error');
+            if (storedError) {
+                // Clear it after reading
+                sessionStorage.removeItem('permission_error');
+                setErrorMessage(storedError);
+            }
         }
-        return null;
-    });
+    }, []);
 
     if (!errorMessage) {
         return null;

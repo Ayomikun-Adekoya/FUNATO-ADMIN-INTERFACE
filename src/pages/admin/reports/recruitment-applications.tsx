@@ -8,6 +8,7 @@ import { formatDate } from '@/utils/date';
 import { ChevronDown, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { applicationsApi } from '@/lib/api';
+import { useExportWorker } from '@/hooks/useExportWorker';
 import type { Application, ApplicationQueryParams } from '@/types/api';
 
 // Export Dropdown Component
@@ -89,6 +90,9 @@ export default function RecruitmentApplicationsReportPage() {
     const [statusFilter, setStatusFilter] = useState<'pending' | 'reviewed' | 'shortlisted' | 'rejected'| ''>('');
     const [positionTypeFilter, setPositionTypeFilter] = useState<'Academic' | 'Non-Academic' | 'Volunteer' | ''>('');
 
+    // Initialize export worker for offload processing
+    const { export: processExport } = useExportWorker();
+
     const { data: normalizedData, isLoading } = useApplications({
         page,
         per_page: perPage,
@@ -96,6 +100,7 @@ export default function RecruitmentApplicationsReportPage() {
         status: statusFilter || undefined,
         position_type: positionTypeFilter || undefined,
     });
+
 
     // Normalize application data to flat rows for table and export
     const normalizeApplicationForReport = (app: Application): Record<string, any> => {
@@ -215,10 +220,54 @@ export default function RecruitmentApplicationsReportPage() {
 
     const canExport = filteredData.length > 0;
 
+    // Retry logic with exponential backoff
+    const fetchWithRetry = async (
+        pageNum: number,
+        perPage: number,
+        status?: string,
+        positionType?: string,
+        retries = 3
+    ): Promise<any> => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const params: ApplicationQueryParams = {
+                    page: pageNum,
+                    per_page: perPage,
+                };
+
+                if (status && status !== '') {
+                    params.status = status;
+                }
+                if (positionType && positionType !== '') {
+                    params.position_type = positionType;
+                }
+
+                const response = await applicationsApi.getAll(params);
+                return response; // Success
+            } catch (error) {
+                const isLastAttempt = attempt === retries;
+                const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // exponential backoff, max 10s
+
+                if (isLastAttempt) {
+                    console.error(`Failed to fetch page ${pageNum} after ${retries} attempts`, error);
+                    throw error; // Give up
+                }
+
+                console.warn(`Page ${pageNum} request failed, retrying in ${backoffMs}ms (attempt ${attempt}/${retries})`);
+                toast.warning(`Page ${pageNum} retry attempt ${attempt}/${retries}...`, { autoClose: 2000 });
+
+                // Wait before retrying
+                await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            }
+        }
+    };
+
     // Fetch all applications from API respecting status and position_type filters
+    // Optimized with parallel requests and retry logic to prevent timeouts
     const fetchAllApplications = async (status?: string, positionType?: string): Promise<Application[]> => {
         const allApplications: Application[] = [];
-        const perPage = 500; // Increased for faster fetching
+        const perPage = 500; // Reduced from 1000 for better stability
+        const maxConcurrent = 3; // Reduced from 5 to reduce server load
 
         try {
             // Fetch first page to get total count
@@ -235,33 +284,46 @@ export default function RecruitmentApplicationsReportPage() {
                 firstParams.position_type = positionType;
             }
 
-            const firstResponse = await applicationsApi.getAll(firstParams);
-            // Handle both paginated and non-paginated responses
+            toast.info('Fetching initial data...', { autoClose: false });
+            const firstResponse = await fetchWithRetry(1, perPage, status, positionType);
             const firstData = Array.isArray(firstResponse) ? firstResponse : firstResponse.data;
             allApplications.push(...firstData);
             const totalPages = (firstResponse as any).last_page || 1;
 
             if (totalPages > 1) {
-                toast.info(`Fetching ${totalPages} pages of data...`, { autoClose: false });
+                // Build array of remaining pages to fetch
+                const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
 
-                // Fetch remaining pages
-                for (let p = 2; p <= totalPages; p++) {
-                    const params: ApplicationQueryParams = {
-                        page: p,
-                        per_page: perPage,
-                    };
+                // Fetch pages in parallel batches with retry support
+                for (let i = 0; i < remainingPages.length; i += maxConcurrent) {
+                    const batchPages = remainingPages.slice(i, i + maxConcurrent);
+                    const progressStart = i + 2;
+                    const progressEnd = Math.min(i + maxConcurrent + 1, totalPages);
 
-                    // Only include filters if they have values
-                    if (status && status !== '') {
-                        params.status = status;
+                    toast.info(
+                        `Fetching pages ${progressStart} to ${progressEnd} of ${totalPages}... (with retries)`,
+                        { autoClose: false }
+                    );
+
+                    // Create promises for all pages in this batch with retry support
+                    const batchPromises = batchPages.map((pageNum) =>
+                        fetchWithRetry(pageNum, perPage, status, positionType, 3)
+                    );
+
+                    try {
+                        // Wait for all requests in this batch to complete
+                        const batchResponses = await Promise.all(batchPromises);
+
+                        // Collect results from all responses
+                        batchResponses.forEach((response) => {
+                            const responseData = Array.isArray(response) ? response : response.data;
+                            allApplications.push(...responseData);
+                        });
+                    } catch (batchError) {
+                        console.error('Batch failed:', batchError);
+                        toast.error(`Failed to fetch batch at pages ${progressStart}-${progressEnd}. Please try again.`);
+                        throw batchError;
                     }
-                    if (positionType && positionType !== '') {
-                        params.position_type = positionType;
-                    }
-
-                    const response = await applicationsApi.getAll(params);
-                    const responseData = Array.isArray(response) ? response : response.data;
-                    allApplications.push(...responseData);
                 }
 
                 toast.dismiss();
@@ -278,21 +340,24 @@ export default function RecruitmentApplicationsReportPage() {
         if (!canExport) return;
 
         try {
-            toast.loading('Preparing CSV export...', { autoClose: false });
+            toast.loading('Fetching data for CSV export...', { autoClose: false });
 
             // Fetch all applications with filters
-            const allApps = await fetchAllApplications(
-                statusFilter,
-                positionTypeFilter
-            );
-
+            const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
             const allRows = allApps.map(normalizeApplicationForReport);
-            const headers = columns.map((c) => c.header).join(',');
-            const csvRows = allRows
-                .map((r) => columns.map((c) => `"${String(r[c.key] || '').replace(/"/g, '""')}"`).join(','))
-                .join('\n');
-            const content = `${headers}\n${csvRows}`;
-            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+
+            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+
+            // Send to worker for processing (off main thread)
+            const blob = await processExport({
+                type: 'csv',
+                data: allRows,
+                columns,
+                onProgress: (msg) => toast.info(msg, { autoClose: false }),
+                onError: (error) => toast.error(`Export error: ${error}`),
+            });
+
+            // Download
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -313,21 +378,24 @@ export default function RecruitmentApplicationsReportPage() {
         if (!canExport) return;
 
         try {
-            toast.loading('Preparing Excel export...', { autoClose: false });
+            toast.loading('Fetching data for Excel export...', { autoClose: false });
 
             // Fetch all applications with filters
-            const allApps = await fetchAllApplications(
-                statusFilter,
-                positionTypeFilter
-            );
-
+            const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
             const allRows = allApps.map(normalizeApplicationForReport);
-            const headerHtml = `<tr>${columns.map((c) => `<th>${c.header}</th>`).join('')}</tr>`;
-            const bodyHtml = allRows
-                .map((r) => `<tr>${columns.map((c) => `<td>${String(r[c.key] || '')}</td>`).join('')}</tr>`)
-                .join('');
-            const table = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><table>${headerHtml}${bodyHtml}</table></body></html>`;
-            const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
+
+            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+
+            // Send to worker for processing (off main thread)
+            const blob = await processExport({
+                type: 'excel',
+                data: allRows,
+                columns,
+                onProgress: (msg) => toast.info(msg, { autoClose: false }),
+                onError: (error) => toast.error(`Export error: ${error}`),
+            });
+
+            // Download
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -348,25 +416,30 @@ export default function RecruitmentApplicationsReportPage() {
         if (!canExport) return;
 
         try {
-            toast.loading('Preparing PDF export...', { autoClose: false });
+            toast.loading('Fetching data for PDF export...', { autoClose: false });
 
             // Fetch all applications with filters
-            const allApps = await fetchAllApplications(
-                statusFilter,
-                positionTypeFilter
-            );
-
+            const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
             const allRows = allApps.map(normalizeApplicationForReport);
-            const jsPDFModule = await import('jspdf');
-            const autoTableModule = await import('jspdf-autotable');
-            const jsPDF = jsPDFModule.default as any;
-            const autoTable = autoTableModule.default as any;
-            const doc = new jsPDF({ orientation: 'landscape' });
-            const head = [columns.map((c) => c.header)];
-            const body = allRows.map((r) => columns.map((c) => String(r[c.key] || '')));
-            // @ts-ignore
-            doc.autoTable({ head, body, startY: 14, styles: { fontSize: 8 } });
-            doc.save('recruitment-applications.pdf');
+
+            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+
+            // Send to worker for processing (off main thread)
+            const blob = await processExport({
+                type: 'pdf',
+                data: allRows,
+                columns,
+                onProgress: (msg) => toast.info(msg, { autoClose: false }),
+                onError: (error) => toast.error(`Export error: ${error}`),
+            });
+
+            // Download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'recruitment-applications.pdf';
+            a.click();
+            URL.revokeObjectURL(url);
 
             toast.dismiss();
             toast.success(`PDF exported successfully (${allApps.length} records)`);

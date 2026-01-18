@@ -208,7 +208,7 @@ api.interceptors.response.use(
         } else if (response?.status === 403) {
             // Forbidden - Permission denied
             const message = String(errorData?.message || 'You do not have permission to perform this action.');
-            
+
             // Check if this is an auth endpoint - if so, treat it like 401
             const isAuthEndpoint = error.config?.url?.includes('/auth/');
             if (isAuthEndpoint) {
@@ -224,7 +224,7 @@ api.interceptors.response.use(
             } else {
                 // Regular permission error - show message but don't redirect
                 toast.error(message);
-                
+
                 // Store the error so we can show it on the dashboard
                 if (typeof window !== 'undefined') {
                     sessionStorage.setItem('permission_error', message);
@@ -672,7 +672,7 @@ export const applicationsApi = {
             '/recruitment/applications',
             { params: cleanParams }
         );
-        
+
         // Handle API response structure: { success: true, data: [...], pagination: {...} }
         if (data && data.pagination) {
             // Flatten the response to match PaginatedResponse structure
@@ -686,7 +686,7 @@ export const applicationsApi = {
                 to: data.pagination.to,
             };
         }
-        
+
         // Fallback for other response structures
         return data.data;
     },
@@ -1164,15 +1164,15 @@ export const candidateDataApi = {
                 if (params.sort_by) queryParams.sort_by = params.sort_by;
                 if (params.sort_order) queryParams.sort_order = params.sort_order;
             }
-            
+
             const { data } = await api.get<any>('/admin/candidate-data', {
                 params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
             });
-            
+
             // Handle the response structure which has data and pagination as separate fields
             const candidateData = data.data || [];
             const paginationData = data.pagination || {};
-            
+
             // Return a PaginatedResponse structure
             return {
                 data: candidateData,

@@ -67,7 +67,7 @@ function generatePDF(data, columns) {
     const rows = data
         .map((row) => columns.map((c) => row[c.key] || '').join('\t'))
         .join('\n');
-    
+
     const content = `${headers}\n${rows}`;
     return new Blob([content], { type: 'text/plain;charset=utf-8;' });
 }

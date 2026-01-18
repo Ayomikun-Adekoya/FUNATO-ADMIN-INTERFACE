@@ -42,11 +42,11 @@ function ExportDropdown({ canExport, onExportCSV, onExportExcel, onExportPDF }: 
                 {isExporting ? 'Exporting...' : 'Export'}
                 <ChevronDown size={16} />
             </button>
-            
+
             {isOpen && (
                 <>
-                    <div 
-                        className="fixed inset-0 z-10" 
+                    <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setIsOpen(false)}
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-20 border border-gray-200 dark:border-gray-700">
@@ -87,7 +87,7 @@ export default function RecruitmentApplicationsReportPage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'pending' | 'reviewed' | 'shortlisted' | 'rejected'| ''>('');
+    const [statusFilter, setStatusFilter] = useState<'pending' | 'reviewed' | 'shortlisted' | 'rejected' | ''>('');
     const [positionTypeFilter, setPositionTypeFilter] = useState<'Academic' | 'Non-Academic' | 'Volunteer' | ''>('');
 
     // Initialize export worker for offload processing
@@ -199,12 +199,11 @@ export default function RecruitmentApplicationsReportPage() {
             key: 'status',
             header: 'Status',
             render: (row: Record<string, any>) => (
-                <span className={`badge ${
-                    row.status === 'shortlisted' ? 'badge-info' :
-                    row.status === 'rejected' ? 'badge-danger' :
-                    row.status === 'reviewed' ? 'badge-warning' :
-                    'badge-warning'
-                }`}>
+                <span className={`badge ${row.status === 'shortlisted' ? 'badge-info' :
+                        row.status === 'rejected' ? 'badge-danger' :
+                            row.status === 'reviewed' ? 'badge-warning' :
+                                'badge-warning'
+                    }`}>
                     {row.status}
                 </span>
             ),
@@ -510,7 +509,7 @@ export default function RecruitmentApplicationsReportPage() {
                                 <option value="reviewed">Reviewed</option>
                                 <option value="shortlisted">Shortlisted</option>
                                 <option value="rejected">Rejected</option>
-                        
+
                             </select>
 
                             <select

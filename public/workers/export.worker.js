@@ -3,6 +3,7 @@
 
 // CSV Export
 function generateCSV(data, columns) {
+    console.time('[Worker] CSV Generation');
     const headers = columns.map((c) => c.header).join(',');
     const rows = data
         .map((row) =>
@@ -19,11 +20,15 @@ function generateCSV(data, columns) {
         .join('\n');
 
     const content = `${headers}\n${rows}`;
-    return new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    console.timeEnd('[Worker] CSV Generation');
+    console.log(`[Worker] CSV Blob size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+    return blob;
 }
 
 // Excel Export (HTML format)
 function generateExcel(data, columns) {
+    console.time('[Worker] Excel Generation');
     const headerRow = `<tr>${columns.map((c) => `<th style="background-color:#4472C4;color:white;padding:8px;border:1px solid #000;font-weight:bold;">${escapeHtml(c.header)}</th>`).join('')}</tr>`;
 
     const bodyRows = data
@@ -56,11 +61,15 @@ function generateExcel(data, columns) {
         </html>
     `;
 
-    return new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    console.timeEnd('[Worker] Excel Generation');
+    console.log(`[Worker] Excel Blob size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+    return blob;
 }
 
 // Simple PDF (CSV format in text/plain for fallback)
 function generatePDF(data, columns) {
+    console.time('[Worker] PDF Generation');
     // Note: PDF generation requires libraries which may not be available in worker
     // Fallback to formatted text/CSV
     const headers = columns.map((c) => c.header).join('\t');
@@ -69,7 +78,10 @@ function generatePDF(data, columns) {
         .join('\n');
 
     const content = `${headers}\n${rows}`;
-    return new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    console.timeEnd('[Worker] PDF Generation');
+    console.log(`[Worker] PDF Blob size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+    return blob;
 }
 
 function escapeHtml(text) {
@@ -87,14 +99,19 @@ function escapeHtml(text) {
 self.onmessage = function (event) {
     const { id, type, data, columns } = event.data;
 
+    console.log(`[Worker] ✨ Export started - Type: ${type}, Records: ${data.length}, Columns: ${columns.length}`);
+    console.log(`[Worker] Message ID: ${id}`);
+
     try {
         let blob;
 
         switch (type) {
             case 'csv':
+                console.log('[Worker] Starting CSV export...');
                 blob = generateCSV(data, columns);
                 break;
             case 'excel':
+                console.log('[Worker] Starting Excel export...');
                 blob = generateExcel(data, columns);
                 break;
             case 'pdf':

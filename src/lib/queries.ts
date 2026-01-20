@@ -14,6 +14,7 @@ import {
     facultiesApi,
     departmentsApi,
     reportsApi,
+    studentsApi,
     modeOfEntriesApi,
     programsApi,
     registrationsApi,
@@ -156,7 +157,7 @@ export const handleQueryError = (error: unknown, context?: string) => {
 export const useCurrentUser = (): UseQueryResult<AuthUser, Error> => {
     // Check if we have a token - if not, don't make the API call
     const hasToken = typeof window !== 'undefined' && localStorage.getItem('auth_token') !== null;
-    
+
     // Get cached user data from localStorage as initial data
     let initialUserData: AuthUser | undefined = undefined;
     if (typeof window !== 'undefined') {
@@ -169,7 +170,7 @@ export const useCurrentUser = (): UseQueryResult<AuthUser, Error> => {
             }
         }
     }
-    
+
     return useQuery({
         queryKey: ['currentUser'],
         queryFn: () => authApi.me(),
@@ -850,6 +851,27 @@ export const useBulkUpdateAdmissionStatus = (): UseMutationResult<{ message: str
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admissions'] });
             toast.success('Admission statuses updated successfully');
+        },
+        onError: (error) => {
+            toast.error(getErrorMessage(error));
+        },
+    });
+};
+
+// ============================================
+// STUDENTS QUERIES (Admin)
+// ============================================
+
+export const useUpdateStudentProgram = (): UseMutationResult<any, Error, { studentId: number; programId: number }> => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ studentId, programId }: { studentId: number; programId: number }) =>
+            studentsApi.updateStudentProgram(studentId, programId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admissions'] });
+            queryClient.invalidateQueries({ queryKey: ['admissionApplications'] });
+            toast.success('Student program updated successfully');
         },
         onError: (error) => {
             toast.error(getErrorMessage(error));

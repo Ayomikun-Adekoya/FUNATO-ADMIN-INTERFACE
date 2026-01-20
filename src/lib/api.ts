@@ -626,6 +626,21 @@ export const reportsApi = {
 };
 
 // ============================================
+// STUDENTS API (Admin)
+// ============================================
+
+export const studentsApi = {
+    updateStudentProgram: async (studentId: number, programId: number): Promise<any> => {
+        const { data } = await api.patch<ApiResponse<any>>(`/admin/admission/students/${studentId}`, {
+            registration: {
+                program_id: programId,
+            },
+        });
+        return data.data;
+    },
+};
+
+// ============================================
 // MODE OF ENTRIES API (Admin)
 // ============================================
 

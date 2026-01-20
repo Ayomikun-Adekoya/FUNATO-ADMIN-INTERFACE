@@ -1,6 +1,9 @@
 // Web Worker for export processing
 // Handles CPU-intensive export operations off the main thread
 
+// Type declarations for Web Worker APIs
+declare function importScripts(...urls: string[]): void;
+
 interface ExportMessage {
     id: string;
     type: 'csv' | 'excel' | 'pdf';
@@ -70,11 +73,12 @@ function generateExcel(data: any[], columns: Array<{ key: string; header: string
 // PDF Export (simple table-based)
 async function generatePDF(data: any[], columns: Array<{ key: string; header: string }>): Promise<Blob> {
     try {
-        // Dynamic import inside worker
-        const jsPDFModule = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        const autoTableModule = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
+        // Load libraries using importScripts in worker context
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
 
-        const { jsPDF } = jsPDFModule;
+        // Access from global scope (window in worker context)
+        const jsPDF = (self as any).jsPDF;
 
         const doc = new jsPDF({ orientation: 'landscape' });
         const head = [columns.map((c) => c.header)];

@@ -9,6 +9,7 @@ import { ChevronDown, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { applicationsApi } from '@/lib/api';
 import { useExportWorker } from '@/hooks/useExportWorker';
+import { flattenApplicationForExport, getRecruitmentExportColumns } from '@/utils/recruitmentExport';
 import type { Application, ApplicationQueryParams } from '@/types/api';
 
 // Export Dropdown Component
@@ -140,6 +141,11 @@ export default function RecruitmentApplicationsReportPage() {
                 position.includes(searchLower);
         });
     }, [allRows, search]);
+
+    // Get export columns with all available details
+    const exportColumns = useMemo(() => {
+        return getRecruitmentExportColumns(true); // Include all detail fields
+    }, []);
 
     const columns = useMemo(() => {
         return [
@@ -343,15 +349,19 @@ export default function RecruitmentApplicationsReportPage() {
 
             // Fetch all applications with filters
             const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
-            const allRows = allApps.map(normalizeApplicationForReport);
 
-            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+            toast.loading(`Processing ${allApps.length} records with all details...`, { autoClose: false });
+
+            // Flatten each application with all nested details (education, work exp, etc)
+            const allRows = allApps.flatMap((app) => flattenApplicationForExport(app, false));
+
+            toast.loading(`Processing ${allRows.length} rows in worker...`, { autoClose: false });
 
             // Send to worker for processing (off main thread)
             const blob = await processExport({
                 type: 'csv',
                 data: allRows,
-                columns,
+                columns: exportColumns,
                 onProgress: (msg) => toast.info(msg, { autoClose: false }),
                 onError: (error) => toast.error(`Export error: ${error}`),
             });
@@ -360,12 +370,12 @@ export default function RecruitmentApplicationsReportPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'recruitment-applications.csv';
+            a.download = `recruitment-applications-detailed-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
 
             toast.dismiss();
-            toast.success(`CSV exported successfully (${allApps.length} records)`);
+            toast.success(`CSV exported successfully (${allApps.length} applicants)`);
         } catch (error) {
             toast.dismiss();
             console.error('Error exporting to CSV:', error);
@@ -381,15 +391,19 @@ export default function RecruitmentApplicationsReportPage() {
 
             // Fetch all applications with filters
             const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
-            const allRows = allApps.map(normalizeApplicationForReport);
 
-            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+            toast.loading(`Processing ${allApps.length} records with all details...`, { autoClose: false });
+
+            // Flatten each application with all nested details
+            const allRows = allApps.flatMap((app) => flattenApplicationForExport(app, false));
+
+            toast.loading(`Processing ${allRows.length} rows in worker...`, { autoClose: false });
 
             // Send to worker for processing (off main thread)
             const blob = await processExport({
                 type: 'excel',
                 data: allRows,
-                columns,
+                columns: exportColumns,
                 onProgress: (msg) => toast.info(msg, { autoClose: false }),
                 onError: (error) => toast.error(`Export error: ${error}`),
             });
@@ -398,12 +412,12 @@ export default function RecruitmentApplicationsReportPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'recruitment-applications.xls';
+            a.download = `recruitment-applications-detailed-${new Date().toISOString().split('T')[0]}.xls`;
             a.click();
             URL.revokeObjectURL(url);
 
             toast.dismiss();
-            toast.success(`Excel exported successfully (${allApps.length} records)`);
+            toast.success(`Excel exported successfully (${allApps.length} applicants)`);
         } catch (error) {
             toast.dismiss();
             console.error('Error exporting to Excel:', error);
@@ -419,15 +433,19 @@ export default function RecruitmentApplicationsReportPage() {
 
             // Fetch all applications with filters
             const allApps = await fetchAllApplications(statusFilter, positionTypeFilter);
-            const allRows = allApps.map(normalizeApplicationForReport);
 
-            toast.loading(`Processing ${allApps.length} records in worker...`, { autoClose: false });
+            toast.loading(`Processing ${allApps.length} records with all details...`, { autoClose: false });
+
+            // Flatten each application with all nested details
+            const allRows = allApps.flatMap((app) => flattenApplicationForExport(app, false));
+
+            toast.loading(`Processing ${allRows.length} rows in worker...`, { autoClose: false });
 
             // Send to worker for processing (off main thread)
             const blob = await processExport({
                 type: 'pdf',
                 data: allRows,
-                columns,
+                columns: exportColumns,
                 onProgress: (msg) => toast.info(msg, { autoClose: false }),
                 onError: (error) => toast.error(`Export error: ${error}`),
             });
@@ -436,12 +454,12 @@ export default function RecruitmentApplicationsReportPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'recruitment-applications.pdf';
+            a.download = `recruitment-applications-detailed-${new Date().toISOString().split('T')[0]}.pdf`;
             a.click();
             URL.revokeObjectURL(url);
 
             toast.dismiss();
-            toast.success(`PDF exported successfully (${allApps.length} records)`);
+            toast.success(`PDF exported successfully (${allApps.length} applicants)`);
         } catch (error) {
             toast.dismiss();
             console.error('Error exporting to PDF:', error);

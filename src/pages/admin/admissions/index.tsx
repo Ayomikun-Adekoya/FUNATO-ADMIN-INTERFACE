@@ -103,16 +103,30 @@ export default function AdmissionsListPage() {
             key: 'actions',
             header: 'Actions',
             render: (admission: Admission) => (
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => router.push({
-                            pathname: `/admin/admissions/${admission.id}`,
-                            query: { data: JSON.stringify(admission) }
-                        })}
-                        className="link text-sm"
-                    >
-                        Edit
+                <div className="relative group">
+                    <button className="link text-sm">
+                        Edit ▼
                     </button>
+                    <div className="hidden group-hover:block absolute right-0 mt-1 w-48 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-10">
+                        <button
+                            onClick={() => router.push({
+                                pathname: `/admin/admissions/${admission.id}`,
+                                query: { data: JSON.stringify(admission), mode: 'decision' }
+                            })}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                            Edit Admission Decision
+                        </button>
+                        <button
+                            onClick={() => router.push({
+                                pathname: `/admin/admissions/${admission.id}`,
+                                query: { data: JSON.stringify(admission), mode: 'course' }
+                            })}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 border-t border-gray-200 dark:border-gray-600"
+                        >
+                            Edit Course/Program
+                        </button>
+                    </div>
                 </div>
             ),
         },

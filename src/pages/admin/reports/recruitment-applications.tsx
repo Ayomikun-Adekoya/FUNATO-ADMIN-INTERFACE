@@ -206,9 +206,9 @@ export default function RecruitmentApplicationsReportPage() {
             header: 'Status',
             render: (row: Record<string, any>) => (
                 <span className={`badge ${row.status === 'shortlisted' ? 'badge-info' :
-                        row.status === 'rejected' ? 'badge-danger' :
-                            row.status === 'reviewed' ? 'badge-warning' :
-                                'badge-warning'
+                    row.status === 'rejected' ? 'badge-danger' :
+                        row.status === 'reviewed' ? 'badge-warning' :
+                            'badge-warning'
                     }`}>
                     {row.status}
                 </span>

@@ -25,7 +25,7 @@ export default function CreateScreeningPage() {
     const { data: admissionsData, isLoading } = useAdmissions({
         per_page: perPage,
         page: currentPage,
-        decision: 'pending'
+        decision: 'admitted'
     });
     const createScreeningMutation = useCreateScreening();
 

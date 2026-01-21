@@ -69,6 +69,8 @@ export interface RecruitmentExportRow {
     // Document Info (concatenated or separate rows)
     document_type?: string;
     document_file_name?: string;
+    document_mime_type?: string;
+    document_size?: string;
 }
 
 /**
@@ -196,6 +198,8 @@ export function flattenApplicationForExport(
             const doc = app.documents[i];
             row.document_type = doc.document_type || '';
             row.document_file_name = doc.file_name || '';
+            row.document_mime_type = doc.mime_type || '';
+            row.document_size = doc.size ? `${(doc.size / 1024).toFixed(2)} KB` : '';
         }
 
         rows.push(row);
@@ -271,6 +275,8 @@ export function getRecruitmentExportColumns(
         // Document
         { key: 'document_type', header: 'Document - Type' },
         { key: 'document_file_name', header: 'Document - File Name' },
+        { key: 'document_mime_type', header: 'Document - MIME Type' },
+        { key: 'document_size', header: 'Document - Size' },
     ];
 
     return [...baseColumns, ...detailColumns];

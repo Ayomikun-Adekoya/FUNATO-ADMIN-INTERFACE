@@ -103,19 +103,80 @@ export default function RecruitmentApplicationsReportPage() {
     });
 
 
-    // Normalize application data to flat rows for table and export
+    // Normalize application data to flat rows for table and export (with all details)
     const normalizeApplicationForReport = (app: Application): Record<string, any> => {
+        // Get first education, work exp, cert, reference, document if available
+        const firstEducation = app.educational_backgrounds?.[0];
+        const firstWorkExp = app.work_experiences?.[0];
+        const firstCertification = app.professional_certifications?.[0];
+        const firstReference = app.references?.[0];
+        const firstDocument = app.documents?.[0];
+
         return {
+            // Personal & Contact
             applicant_id: app.applicant_id || '',
+            form_of_address: app.form_of_address || '',
+            first_name: app.first_name || '',
+            last_name: app.last_name || '',
+            other_name: app.other_name || '',
             full_name: `${app.first_name || ''} ${app.last_name || ''}`.trim(),
             email: app.email || '',
             phone: app.phone || '',
-            position_applied_for: app.position_applied_for || '',
+            residential_address: app.residential_address || '',
+            
+            // Demographics
+            gender: app.gender || '',
+            date_of_birth: app.date_of_birth || '',
+            nationality: app.nationality || '',
+            marital_status: app.marital_status || '',
+            state_of_origin: app.state_of_origin || '',
+            home_town: app.home_town || '',
+            lga: app.lga || '',
+            
+            // Position Info
             position_type: app.position_type || '',
+            position_applied_for: app.position_applied_for || '',
             college: app.college || '',
             department: app.department || '',
+            preferred_start_date: app.preferred_start_date || '',
+            how_did_you_hear: app.how_did_you_hear || '',
+            
+            // Status & Dates
             status: app.status || 'pending',
             created_at: app.created_at || '',
+            updated_at: app.updated_at || '',
+            
+            // Education Details (first record)
+            education_institution: firstEducation?.institution_name || '',
+            education_certificate: firstEducation?.certificate_obtained || '',
+            education_class: firstEducation?.class_of_degree || '',
+            education_year: firstEducation?.year_attained || '',
+            
+            // Work Experience Details (first record)
+            work_organization: firstWorkExp?.organization_name || '',
+            work_job_title: firstWorkExp?.job_title || '',
+            work_start_date: firstWorkExp?.start_date || '',
+            work_end_date: firstWorkExp?.end_date || '',
+            work_responsibility: firstWorkExp?.responsibility || '',
+            
+            // Certification Details (first record)
+            certification_name: firstCertification?.certification_name || '',
+            certification_issuer: firstCertification?.issuing_organization || '',
+            certification_date: firstCertification?.date_obtained || '',
+            
+            // Reference Details (first record)
+            reference_full_name: firstReference?.full_name || '',
+            reference_phone: firstReference?.phone || '',
+            reference_relationship: firstReference?.relationship || '',
+            
+            // Document Details (first record)
+            document_type: firstDocument?.document_type || '',
+            document_file_name: firstDocument?.file_name || '',
+            document_mime_type: firstDocument?.mime_type || '',
+            document_size: firstDocument?.size ? `${(firstDocument.size / 1024).toFixed(2)} KB` : '',
+            
+            // Raw data for custom rendering
+            _app: app,
         };
     };
 
@@ -163,62 +224,188 @@ export default function RecruitmentApplicationsReportPage() {
 
     const tableColumns = [
         {
-            key: 'full_name',
-            header: 'Applicant Name',
+            key: 'applicant_info',
+            header: 'Applicant Information',
             render: (row: Record<string, any>) => (
-                <div>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">{row.full_name}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{row.email}</div>
+                <div className="space-y-2">
+                    <div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">
+                            {row.form_of_address && <span>{row.form_of_address} </span>}
+                            {row.full_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">ID: {row.applicant_id}</div>
+                    </div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <p>{row.email}</p>
+                        <p>{row.phone}</p>
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        {row.gender && <p><span className="font-medium">Gender:</span> {row.gender}</p>}
+                        {row.date_of_birth && <p><span className="font-medium">DOB:</span> {formatDate(row.date_of_birth)}</p>}
+                        {row.marital_status && <p><span className="font-medium">Marital:</span> {row.marital_status}</p>}
+                        {row.other_name && <p><span className="font-medium">Other Name:</span> {row.other_name}</p>}
+                    </div>
                 </div>
             ),
         },
         {
-            key: 'position',
-            header: 'Position Applied',
+            key: 'position_info',
+            header: 'Position Information',
             render: (row: Record<string, any>) => (
-                <div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{row.position_applied_for}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{row.position_type}</div>
+                <div className="space-y-1">
+                    <div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{row.position_applied_for || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{row.position_type || 'N/A'}</div>
+                    </div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <p className="font-medium">{row.college || 'N/A'}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{row.department || 'N/A'}</p>
+                    </div>
+                    {row.preferred_start_date && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Start Date:</span> {formatDate(row.preferred_start_date)}
+                        </div>
+                    )}
+                    {row.how_did_you_hear && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Heard via:</span> {row.how_did_you_hear}
+                        </div>
+                    )}
                 </div>
             ),
         },
         {
-            key: 'contact',
-            header: 'Contact',
+            key: 'demographics',
+            header: 'Demographics',
             render: (row: Record<string, any>) => (
-                <div>
-                    <div className="text-sm text-gray-900 dark:text-gray-100">{row.phone}</div>
+                <div className="text-sm space-y-1">
+                    {row.nationality && <p><span className="font-medium">Nationality:</span> {row.nationality}</p>}
+                    {row.state_of_origin && <p><span className="font-medium">State:</span> {row.state_of_origin}</p>}
+                    {row.home_town && <p><span className="font-medium">Town:</span> {row.home_town}</p>}
+                    {row.lga && <p><span className="font-medium">LGA:</span> {row.lga}</p>}
+                    {row.residential_address && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Address:</span> {row.residential_address.substring(0, 30)}...
+                        </p>
+                    )}
                 </div>
             ),
         },
         {
-            key: 'college_dept',
-            header: 'College / Department',
+            key: 'education',
+            header: 'Education (Latest)',
             render: (row: Record<string, any>) => (
-                <div>
-                    <div className="text-sm text-gray-900 dark:text-gray-100">{row.college || 'N/A'}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{row.department || 'N/A'}</div>
+                <div className="text-sm space-y-1">
+                    {row.education_institution ? (
+                        <>
+                            <p className="font-medium">{row.education_institution}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{row.education_certificate}</p>
+                            {row.education_class && <p className="text-xs"><span className="font-medium">Class:</span> {row.education_class}</p>}
+                            {row.education_year && <p className="text-xs"><span className="font-medium">Year:</span> {row.education_year}</p>}
+                        </>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                    )}
                 </div>
             ),
         },
         {
-            key: 'status',
-            header: 'Status',
+            key: 'work_exp',
+            header: 'Work Experience (Latest)',
             render: (row: Record<string, any>) => (
-                <span className={`badge ${row.status === 'shortlisted' ? 'badge-info' :
-                    row.status === 'rejected' ? 'badge-danger' :
-                        row.status === 'reviewed' ? 'badge-warning' :
-                            'badge-warning'
-                    }`}>
-                    {row.status}
-                </span>
+                <div className="text-sm space-y-1">
+                    {row.work_organization ? (
+                        <>
+                            <p className="font-medium">{row.work_job_title}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{row.work_organization}</p>
+                            {row.work_start_date && (
+                                <p className="text-xs">
+                                    {formatDate(row.work_start_date)} to {row.work_end_date ? formatDate(row.work_end_date) : 'Present'}
+                                </p>
+                            )}
+                            {row.work_responsibility && (
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{row.work_responsibility}</p>
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                    )}
+                </div>
             ),
         },
         {
-            key: 'created_at',
-            header: 'Submitted',
+            key: 'certification',
+            header: 'Certification (Latest)',
             render: (row: Record<string, any>) => (
-                <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(row.created_at)}</span>
+                <div className="text-sm space-y-1">
+                    {row.certification_name ? (
+                        <>
+                            <p className="font-medium">{row.certification_name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{row.certification_issuer}</p>
+                            {row.certification_date && (
+                                <p className="text-xs">{formatDate(row.certification_date)}</p>
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: 'reference',
+            header: 'Reference (Latest)',
+            render: (row: Record<string, any>) => (
+                <div className="text-sm space-y-1">
+                    {row.reference_full_name ? (
+                        <>
+                            <p className="font-medium">{row.reference_full_name}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{row.reference_relationship}</p>
+                            <p className="text-xs">{row.reference_phone}</p>
+                        </>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: 'documents',
+            header: 'Documents',
+            render: (row: Record<string, any>) => (
+                <div className="text-sm space-y-1">
+                    {row.document_file_name ? (
+                        <>
+                            <p className="font-medium text-blue-600 dark:text-blue-400">{row.document_type}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{row.document_file_name}</p>
+                            {row.document_mime_type && <p className="text-xs text-gray-500">{row.document_mime_type}</p>}
+                            {row.document_size && <p className="text-xs text-gray-500">{row.document_size}</p>}
+                        </>
+                    ) : (
+                        <p className="text-gray-500 dark:text-gray-400">N/A</p>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: 'status_dates',
+            header: 'Status & Timeline',
+            render: (row: Record<string, any>) => (
+                <div className="space-y-2">
+                    <span className={`badge ${row.status === 'shortlisted' ? 'badge-info' :
+                        row.status === 'rejected' ? 'badge-danger' :
+                            row.status === 'reviewed' ? 'badge-warning' :
+                                'badge-warning'
+                        }`}>
+                        {row.status}
+                    </span>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                        <p>Submitted: {formatDate(row.created_at)}</p>
+                        {row.updated_at && (
+                            <p>Updated: {formatDate(row.updated_at)}</p>
+                        )}
+                    </div>
+                </div>
             ),
         },
     ];

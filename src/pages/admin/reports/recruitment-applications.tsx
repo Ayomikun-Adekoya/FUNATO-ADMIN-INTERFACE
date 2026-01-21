@@ -123,7 +123,7 @@ export default function RecruitmentApplicationsReportPage() {
             email: app.email || '',
             phone: app.phone || '',
             residential_address: app.residential_address || '',
-            
+
             // Demographics
             gender: app.gender || '',
             date_of_birth: app.date_of_birth || '',
@@ -132,7 +132,7 @@ export default function RecruitmentApplicationsReportPage() {
             state_of_origin: app.state_of_origin || '',
             home_town: app.home_town || '',
             lga: app.lga || '',
-            
+
             // Position Info
             position_type: app.position_type || '',
             position_applied_for: app.position_applied_for || '',
@@ -140,41 +140,41 @@ export default function RecruitmentApplicationsReportPage() {
             department: app.department || '',
             preferred_start_date: app.preferred_start_date || '',
             how_did_you_hear: app.how_did_you_hear || '',
-            
+
             // Status & Dates
             status: app.status || 'pending',
             created_at: app.created_at || '',
             updated_at: app.updated_at || '',
-            
+
             // Education Details (first record)
             education_institution: firstEducation?.institution_name || '',
             education_certificate: firstEducation?.certificate_obtained || '',
             education_class: firstEducation?.class_of_degree || '',
             education_year: firstEducation?.year_attained || '',
-            
+
             // Work Experience Details (first record)
             work_organization: firstWorkExp?.organization_name || '',
             work_job_title: firstWorkExp?.job_title || '',
             work_start_date: firstWorkExp?.start_date || '',
             work_end_date: firstWorkExp?.end_date || '',
             work_responsibility: firstWorkExp?.responsibility || '',
-            
+
             // Certification Details (first record)
             certification_name: firstCertification?.certification_name || '',
             certification_issuer: firstCertification?.issuing_organization || '',
             certification_date: firstCertification?.date_obtained || '',
-            
+
             // Reference Details (first record)
             reference_full_name: firstReference?.full_name || '',
             reference_phone: firstReference?.phone || '',
             reference_relationship: firstReference?.relationship || '',
-            
+
             // Document Details (first record)
             document_type: firstDocument?.document_type || '',
             document_file_name: firstDocument?.file_name || '',
             document_mime_type: firstDocument?.mime_type || '',
             document_size: firstDocument?.size ? `${(firstDocument.size / 1024).toFixed(2)} KB` : '',
-            
+
             // Raw data for custom rendering
             _app: app,
         };
